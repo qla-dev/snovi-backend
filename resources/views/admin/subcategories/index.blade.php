@@ -16,7 +16,7 @@
                     <th>Naziv</th>
                     <th>Kategorija</th>
                     <th>Status</th>
-                    <th>Akcije</th>
+                    <th class="text-end" style="width:180px;">Akcije</th>
                 </tr>
             </thead>
             <tbody>
@@ -32,8 +32,8 @@
                                 <span class="badge bg-secondary">Sakrivena</span>
                             @endif
                         </td>
-                        <td>
-                            <div class="d-flex gap-2 align-items-center">
+                        <td class="text-end">
+                            <div class="d-inline-flex gap-2 align-items-center justify-content-end">
                                 <a href="{{ route('admin.subcategories.edit', $sub) }}" class="btn btn-sm btn-primary">Uredi</a>
                                 <form action="{{ route('admin.subcategories.destroy', $sub) }}" method="POST" class="d-inline">
                                     @csrf @method('DELETE')

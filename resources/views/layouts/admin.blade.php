@@ -130,6 +130,11 @@
         .upload-dot.uploading { background: #8b5cf6; animation: pulse 1s ease-in-out infinite; }
         .upload-dot.error { background: #ef4444; }
         .upload-dot.ready { background: #22c55e; }
+        .upload-status-inline {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+        }
         @keyframes pulse {
             0% { transform: scale(0.9); opacity: 0.7; }
             50% { transform: scale(1.1); opacity: 1; }
@@ -145,18 +150,21 @@
     </style>
 </head>
 <body>
+@php $isLogin = request()->routeIs('login') || request()->routeIs('login.post'); @endphp
 <nav class="navbar navbar-expand-lg navbar-dark" style="background:#111827;">
     <div class="container-fluid">
         <a class="navbar-brand" href="{{ route('admin.stories.index') }}">SNOVI CMS</a>
-        <div class="navbar-nav me-auto">
-            <a class="nav-link {{ request()->routeIs('admin.stories.*') ? 'active' : '' }}" href="{{ route('admin.stories.index') }}">Priče</a>
-            <a class="nav-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}" href="{{ route('admin.categories.index') }}">Kategorije</a>
-            <a class="nav-link {{ request()->routeIs('admin.subcategories.*') ? 'active' : '' }}" href="{{ route('admin.subcategories.index') }}">Potkategorije</a>
-        </div>
-        <form action="{{ route('logout') }}" method="POST" class="d-flex">
-            @csrf
-            <button class="btn btn-sm btn-outline-danger">Odjava</button>
-        </form>
+        @unless($isLogin)
+            <div class="navbar-nav me-auto">
+                <a class="nav-link {{ request()->routeIs('admin.stories.*') ? 'active' : '' }}" href="{{ route('admin.stories.index') }}">Priče</a>
+                <a class="nav-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}" href="{{ route('admin.categories.index') }}">Kategorije</a>
+                <a class="nav-link {{ request()->routeIs('admin.subcategories.*') ? 'active' : '' }}" href="{{ route('admin.subcategories.index') }}">Potkategorije</a>
+            </div>
+            <form action="{{ route('logout') }}" method="POST" class="d-flex">
+                @csrf
+                <button class="btn btn-sm btn-outline-danger">Odjava</button>
+            </form>
+        @endunless
     </div>
 </nav>
 

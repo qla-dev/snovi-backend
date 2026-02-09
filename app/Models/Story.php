@@ -39,6 +39,12 @@ class Story extends Model
         'published_at' => 'datetime',
     ];
 
+    protected $appends = [
+        'has_image',
+        'has_audio',
+        'publish_state',
+    ];
+
     public function getRouteKeyName(): string
     {
         return 'slug';
@@ -52,6 +58,21 @@ class Story extends Model
     public function subcategory()
     {
         return $this->belongsTo(Subcategory::class);
+    }
+
+    public function getHasImageAttribute(): bool
+    {
+        return !empty($this->image_url);
+    }
+
+    public function getHasAudioAttribute(): bool
+    {
+        return !empty($this->audio_url) || !empty($this->audio_path);
+    }
+
+    public function getPublishStateAttribute(): string
+    {
+        return ($this->has_image && $this->has_audio) ? 'objavljeno' : 'draft';
     }
 
     public function getAudioUrlAttribute($value)

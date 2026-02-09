@@ -1,13 +1,16 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="mb-3 d-flex justify-content-between align-items-center">
+<div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="mb-0">Uredi kategoriju</h4>
-    <a href="{{ route('admin.categories.index') }}" class="btn btn-outline-light">Nazad</a>
+    <div class="d-flex gap-2">
+        <a href="{{ route('admin.categories.index') }}" class="btn btn-outline-light">Nazad</a>
+        <button form="category-form" class="btn btn-primary">Spasi</button>
+    </div>
 </div>
 
 <div class="card p-3">
-    <form action="{{ route('admin.categories.update', $category) }}" method="POST" class="vstack gap-3">
+    <form id="category-form" action="{{ route('admin.categories.update', $category) }}" method="POST" class="vstack gap-3">
         @csrf
         @method('PUT')
         <div class="row g-3">
@@ -29,10 +32,6 @@
                 <input class="form-check-input" type="checkbox" name="is_active" value="1" id="is_active" {{ old('is_active', $category->is_active) ? 'checked' : '' }}>
                 <label class="form-check-label" for="is_active">Aktivna</label>
             </div>
-        </div>
-        <div class="d-flex gap-2">
-            <button class="btn btn-primary">Spasi promjene</button>
-            <a class="btn btn-outline-secondary" href="{{ route('admin.categories.index') }}">Otkaži</a>
         </div>
     </form>
 </div>

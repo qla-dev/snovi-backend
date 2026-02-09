@@ -33,10 +33,14 @@
         <label class="form-label">Trajanje (label)</label>
         <input type="text" name="duration_label" class="form-control" value="{{ old('duration_label', $story->duration_label) }}" placeholder="32 min">
     </div>
+    <div class="col-md-4">
+        <label class="form-label">Objavljeno</label>
+        <input type="datetime-local" name="published_at" class="form-control" value="{{ old('published_at', optional($story->published_at)->format('Y-m-d\TH:i')) }}">
+    </div>
 </div>
 
 <div class="row g-3">
-    <div class="col-md-4">
+    <div class="col-md-6">
         <label class="form-label">Kategorija</label>
         <select name="category_id" id="category-select" class="form-select" required>
             <option value="">Odaberi...</option>
@@ -45,7 +49,7 @@
             @endforeach
         </select>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-6">
         <label class="form-label">Potkategorija</label>
         <select name="subcategory_id" id="subcategory-select" class="form-select">
             <option value="">--</option>
@@ -56,27 +60,23 @@
             @endforeach
         </select>
     </div>
-    <div class="col-md-4">
-        <label class="form-label">Objavljeno</label>
-        <input type="datetime-local" name="published_at" class="form-control" value="{{ old('published_at', optional($story->published_at)->format('Y-m-d\TH:i')) }}">
-    </div>
 </div>
 
 <div class="row g-3">
     <div class="col-md-6">
         <input type="hidden" name="image_url" value="{{ old('image_url', $story->image_url) }}">
-        <label class="form-label">Upload sliku <small class="text-muted">(min 1536x1024, JPG/PNG)</small></label>
+        <label class="form-label">Upload sliku <small class="text-muted">(1536x1024, JPG/PNG)</small></label>
         <input type="file" name="image_upload" class="form-control" accept="image/png,image/jpeg">
         <div class="mt-2">
             <small class="text-muted">Pregled slike</small>
-            <div class="rounded p-0" style="min-height:120px; border: 1px solid #1f2937;">
+            <div class="rounded p-0" style="min-height:120px;">
                 <img id="story-image-preview" src="{{ old('image_url', $story->image_url) }}" alt="Preview" style="max-width:100%; max-height:200px; display: {{ old('image_url', $story->image_url) ? 'block' : 'none' }};">
             </div>
         </div>
     </div>
     <div class="col-md-6">
         <input type="hidden" name="audio_url" value="{{ old('audio_url', $story->audio_url) }}">
-        <label class="form-label">Upload audio</label>
+        <label class="form-label">Upload audio (MP3/M4A)</label>
         <input type="file" name="audio_upload" class="form-control" accept="audio/mpeg,audio/mp3,audio/x-m4a,audio/m4a">
         <div class="mt-2">
             <small class="text-muted">Pregled audio snimka</small>
@@ -97,6 +97,27 @@
 <div>
     <label class="form-label">Opis</label>
     <textarea name="description" class="form-control" rows="3">{{ old('description', $story->description) }}</textarea>
+</div>
+
+<div class="mt-3">
+    <label class="form-label d-block mb-2">Efekti (0 - 10)</label>
+    <div class="card p-3" style="background:#0b1220; border:1px solid #1f2937;">
+        <div class="row g-3">
+            @foreach($effectLabels as $key => $label)
+                <div class="col-md-4">
+                    <label class="form-label d-flex justify-content-between align-items-center">
+                        <span>{{ $label }}</span>
+                        <span class="text-muted small" id="level-{{ $key }}">{{ old("effects.$key", $story->effects[$key] ?? 0) }}</span>
+                    </label>
+                    <input type="range" class="form-range" min="0" max="10" step="1"
+                        name="effects[{{ $key }}]"
+                        value="{{ old("effects.$key", $story->effects[$key] ?? 0) }}"
+                        oninput="document.getElementById('level-{{ $key }}').innerText = this.value;"
+                        style="accent-color:#8b5cf6;">
+                </div>
+            @endforeach
+        </div>
+    </div>
 </div>
 
 <div class="toggle-row row g-3 mt-2 align-items-center text-center">
@@ -137,9 +158,10 @@
   const audioPreview = document.getElementById('story-audio-preview');
   const categorySelect = document.getElementById('category-select');
   const subcategorySelect = document.getElementById('subcategory-select');
-  const statusBar = document.getElementById('upload-status');
+  const statusBar = document.getElementById('upload-status-inline') || document.getElementById('upload-status');
   const imgPill = statusBar?.querySelector('[data-type="image"]');
   const audioPill = statusBar?.querySelector('[data-type="audio"]');
+  const publishPill = statusBar?.querySelector('[data-type="publish"]');
   const form = imgUrlInput?.closest('form');
   let progressTimer = null;
   let manualProgressTimer = null;
@@ -151,7 +173,13 @@
     if (!statusBar) return;
     const hasImage = hasImageSelected();
     const hasAudio = hasAudioSelected();
-    statusBar.classList.toggle('show', hasImage || hasAudio || statusBar.dataset.forceShow === '1');
+    statusBar.classList.toggle('show', true);
+    setPillState(imgPill, hasImage ? 'ready' : 'pending', hasImage ? 'Slika: spremno' : 'Slika: nije odabrana');
+    setPillState(audioPill, hasAudio ? 'ready' : 'pending', hasAudio ? 'Audio: spremno' : 'Audio: nije odabrano');
+    if (publishPill) {
+      const allReady = hasImage && hasAudio;
+      setPillState(publishPill, allReady ? 'ready' : 'pending', allReady ? 'Objavljeno' : 'Draft');
+    }
   }
 
   function setPillState(pill, state, label) {

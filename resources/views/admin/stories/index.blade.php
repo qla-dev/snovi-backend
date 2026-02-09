@@ -15,9 +15,10 @@
                     <th>Naslov</th>
                     <th>Kategorija</th>
                     <th>Trajanje</th>
+                    <th>Objava</th>
                     <th>Status</th>
                     <th>Efekti</th>
-                    <th>Akcije</th>
+                    <th class="text-end" style="width:180px;">Akcije</th>
                 </tr>
             </thead>
             <tbody>
@@ -33,6 +34,13 @@
                             <div class="text-muted small">{{ $story->subcategory?->label }}</div>
                         </td>
                         <td>{{ $story->duration_label ?? '—' }}</td>
+                        <td>
+                            @if($story->publish_state === 'objavljeno')
+                                <span class="badge bg-success">Objavljeno</span>
+                            @else
+                                <span class="badge bg-warning text-dark">Draft</span>
+                            @endif
+                        </td>
                         <td>
                             @if($story->locked)
                                 <span class="badge bg-warning text-dark">Zaključano</span>
@@ -50,8 +58,8 @@
                             @php $levels = collect($story->effects ?? [])->filter(fn($v) => $v > 0); @endphp
                             {{ $levels->count() ? $levels->map(fn($v,$k)=>"$k:$v")->implode(', ') : '—' }}
                         </td>
-                        <td>
-                            <div class="d-flex gap-2 align-items-center">
+                        <td class="text-end">
+                            <div class="d-inline-flex gap-2 align-items-center justify-content-end">
                                 <a href="{{ route('admin.stories.edit', $story) }}" class="btn btn-sm btn-primary">Uredi</a>
                                 <form action="{{ route('admin.stories.destroy', $story) }}" method="POST" class="d-inline">
                                     @csrf @method('DELETE')
