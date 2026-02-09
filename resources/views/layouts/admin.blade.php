@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>SNOVI CMS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     <style>
         body { background: #0f172a; color: #e5e7eb; }
         a { text-decoration: none; }
@@ -135,6 +136,42 @@
             gap: 8px;
             align-items: center;
         }
+        /* Fixed header */
+        nav.navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+        }
+        /* DataTables theming */
+        .dataTables_wrapper .dataTables_paginate .page-item .page-link {
+            color: #e5e7eb;
+            background: #111827;
+            border: 1px solid #1f2937;
+        }
+        .dataTables_wrapper .dataTables_paginate .page-item.active .page-link,
+        .dataTables_wrapper .dataTables_paginate .page-link.active {
+            background: #8b5cf6;
+            color: #0b1220;
+            border-color: #8b5cf6;
+        }
+        .dataTables_wrapper .dataTables_paginate .page-item .page-link:hover {
+            background: #1f2937;
+            color: #fff;
+        }
+        .dataTables_wrapper .dataTables_info {
+            color: #e5e7eb;
+        }
+        .dataTables_wrapper .dataTables_filter label,
+        .dataTables_wrapper .dataTables_length label {
+            color: #e5e7eb;
+        }
+        .dataTables_wrapper .dataTables_length select {
+            color: #fff;
+            background: #0b1220;
+            border-color: #1f2937;
+        }
+        /* Force selects to be clickable */
+        select, .form-select { cursor: pointer; }
         @keyframes pulse {
             0% { transform: scale(0.9); opacity: 0.7; }
             50% { transform: scale(1.1); opacity: 1; }
@@ -169,27 +206,64 @@
 </nav>
 
 <div class="container py-4">
+    @yield('content')
+</div>
+
+<div class="position-fixed bottom-0 start-50 translate-middle-x w-100" style="max-width:680px; z-index:1060; padding: 0 16px 16px;">
     @if (session('status'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-success alert-dismissible fade show mb-2" role="alert">
             {{ session('status') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
 
     @if ($errors->any())
-        <div class="alert alert-danger">
+        <div class="alert alert-danger alert-dismissible fade show mb-0" role="alert">
             <ul class="mb-0">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
             </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
-
-    @yield('content')
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const tables = document.querySelectorAll('table.datatable');
+        tables.forEach((tbl) => {
+            const disableSortTargets = [];
+            tbl.querySelectorAll('th').forEach((th, idx) => {
+                const text = (th.textContent || '').trim().toLowerCase();
+                if (text === 'akcije' || text === 'efekti') {
+                    disableSortTargets.push(idx);
+                }
+            });
+            new DataTable(tbl, {
+                paging: true,
+                searching: true,
+                pageLength: 7,
+                order: [],
+                columnDefs: disableSortTargets.length
+                    ? [{ orderable: false, targets: disableSortTargets }]
+                    : [],
+                language: {
+                    search: 'Pretraga:',
+                    lengthMenu: 'Prikaži _MENU_',
+                    info: 'Prikaz _START_ - _END_ od _TOTAL_',
+                    paginate: { previous: 'Prethodno', next: 'Sljedeće' },
+                    infoEmpty: 'Nema podataka',
+                    zeroRecords: 'Nema rezultata'
+                }
+            });
+        });
+    });
+</script>
 @stack('scripts')
 </body>
 </html>

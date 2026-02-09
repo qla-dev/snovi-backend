@@ -9,7 +9,7 @@
 <div class="card p-3">
     <h6 class="text-light mb-3">Sve kategorije</h6>
     <div class="table-responsive">
-        <table class="table align-middle">
+        <table class="table align-middle datatable">
             <thead>
                 <tr>
                     <th>Slug</th>
