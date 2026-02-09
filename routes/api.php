@@ -12,4 +12,6 @@ Route::get('/ping', fn () => [
 
 Route::apiResource('categories', CategoryController::class);
 Route::apiResource('subcategories', SubcategoryController::class);
+Route::get('/stories/published', [StoryController::class, 'recentPublished']);
+Route::get('/stories/tenrecent', [StoryController::class, 'recentPublished']);
 Route::apiResource('stories', StoryController::class);

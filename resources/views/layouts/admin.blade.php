@@ -201,8 +201,8 @@
                 @csrf
                 <button class="btn btn-sm btn-outline-danger">Odjava</button>
             </form>
-        @endunless
-    </div>
+@endunless
+</div>
 </nav>
 
 <div class="container py-4">
@@ -211,7 +211,7 @@
 
 <div class="position-fixed bottom-0 start-50 translate-middle-x w-100" style="max-width:680px; z-index:1060; padding: 0 16px 16px;">
     @if (session('status'))
-        <div class="alert alert-success alert-dismissible fade show mb-2" role="alert">
+        <div class="alert alert-success alert-dismissible fade show mb-2 auto-dismiss" role="alert">
             {{ session('status') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
@@ -235,6 +235,15 @@
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // Auto-dismiss success alerts after 3 seconds
+        const autoAlerts = document.querySelectorAll('.alert.auto-dismiss');
+        autoAlerts.forEach((alertEl) => {
+            setTimeout(() => {
+                const bsAlert = bootstrap.Alert.getOrCreateInstance(alertEl);
+                bsAlert.close();
+            }, 3000);
+        });
+
         const tables = document.querySelectorAll('table.datatable');
         tables.forEach((tbl) => {
             const disableSortTargets = [];
