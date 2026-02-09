@@ -20,9 +20,14 @@ class StoryResource extends JsonResource
             $image = url($image);
         }
 
-        $audio = $this->audio_url;
-        if ($audio && !Str::startsWith($audio, ['http://', 'https://', '//'])) {
-            $audio = url($audio);
+        // Prefer explicit audio_url, then audio_path; always return an absolute URL
+        $audio = $this->audio_url ?: $this->audio_path;
+        if ($audio) {
+            if (!Str::startsWith($audio, ['http://', 'https://', '//'])) {
+                // If it looks like a storage path, normalize with app URL
+                $host = $request->getSchemeAndHttpHost();
+                $audio = $host . '/' . ltrim($audio, '/');
+            }
         }
 
         return [

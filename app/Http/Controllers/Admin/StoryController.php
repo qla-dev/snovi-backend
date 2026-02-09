@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use getID3;
 
 class StoryController extends Controller
 {
@@ -67,6 +68,7 @@ class StoryController extends Controller
             $path = $request->file('audio_upload')->store('audio', 'public');
             $data['audio_path'] = $path;
             $data['audio_url'] = Storage::url($path);
+            $this->enrichAudioMetadata($path, $data);
         }
 
         if ($request->hasFile('image_upload')) {
@@ -131,6 +133,7 @@ class StoryController extends Controller
             $path = $request->file('audio_upload')->store('audio', 'public');
             $data['audio_path'] = $path;
             $data['audio_url'] = Storage::url($path);
+            $this->enrichAudioMetadata($path, $data);
         }
 
         if ($request->hasFile('image_upload')) {
@@ -194,5 +197,62 @@ class StoryController extends Controller
         }
 
         return $effects;
+    }
+
+    /**
+     * Fill duration fields from the uploaded audio (if missing) using getID3/ffprobe when available.
+     */
+    private function enrichAudioMetadata(string $relativePath, array &$data): void
+    {
+        // If user already supplied duration, respect it.
+        if (!empty($data['duration_seconds'])) {
+            return;
+        }
+
+        $fullPath = Storage::disk('public')->path($relativePath);
+        $duration = $this->probeDurationSeconds($fullPath);
+
+        if ($duration) {
+            $data['duration_seconds'] = (int) round($duration);
+            // Only set a human label if not provided
+            $data['duration_label'] = $data['duration_label'] ?? $this->formatDurationLabel($duration);
+        } else {
+            Log::warning('audio.duration.unavailable', ['path' => $fullPath]);
+        }
+    }
+
+    private function probeDurationSeconds(string $fullPath): ?float
+    {
+        // Prefer getID3 if installed
+        if (class_exists(getID3::class)) {
+            try {
+                $analyzer = new getID3();
+                $info = $analyzer->analyze($fullPath);
+                if (!empty($info['playtime_seconds'])) {
+                    return (float) $info['playtime_seconds'];
+                }
+            } catch (\Throwable $e) {
+                Log::warning('audio.duration.getid3_failed', ['path' => $fullPath, 'error' => $e->getMessage()]);
+            }
+        }
+
+        // Fallback to ffprobe if present on the system
+        $ffprobe = trim((string) shell_exec('where ffprobe 2>NUL'));
+        if ($ffprobe) {
+            $cmd = "\"{$ffprobe}\" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " .
+                escapeshellarg($fullPath);
+            $out = shell_exec($cmd);
+            if ($out && is_numeric(trim($out))) {
+                return (float) trim($out);
+            }
+        }
+
+        return null;
+    }
+
+    private function formatDurationLabel(float $seconds): string
+    {
+        $minutes = max(1, (int) round($seconds / 60));
+        return $minutes . ' min';
     }
 }
