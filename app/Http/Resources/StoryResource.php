@@ -20,6 +20,11 @@ class StoryResource extends JsonResource
             $image = url($image);
         }
 
+        $audio = $this->audio_url;
+        if ($audio && !Str::startsWith($audio, ['http://', 'https://', '//'])) {
+            $audio = url($audio);
+        }
+
         return [
             'id' => $this->slug,
             'slug' => $this->slug,
@@ -36,7 +41,7 @@ class StoryResource extends JsonResource
             'is_dummy' => $this->is_dummy,
             'locked' => $this->locked,
             'favorite' => $this->is_favorite,
-            'sound' => $this->audio_url,
+            'sound' => $audio,
             'effects' => $this->effects ?? [],
             'meta' => $this->meta ?? [],
             'published_at' => optional($this->published_at)->toIso8601String(),
