@@ -182,7 +182,8 @@ class StoryController extends Controller
             'is_favorite' => ['sometimes', 'boolean'],
             'audio_url' => ['nullable', 'string', 'max:500'],
             'published_at' => ['nullable', 'date'],
-            'image_upload' => ['nullable', 'image', 'max:2048'],
+            // Allow images up to 5 MB
+            'image_upload' => ['nullable', 'image', 'max:5120'],
             'audio_upload' => ['nullable', 'file', 'max:10240'],
         ]);
 
