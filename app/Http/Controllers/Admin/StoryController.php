@@ -183,8 +183,8 @@ class StoryController extends Controller
             'audio_url' => ['nullable', 'string', 'max:500'],
             'published_at' => ['nullable', 'date'],
             // Allow images up to 5 MB
-            'image_upload' => ['nullable', 'image', 'max:5120'],
-            'audio_upload' => ['nullable', 'file', 'max:10240'],
+            'image_upload' => ['nullable', 'image', 'max:20240'],
+            'audio_upload' => ['nullable', 'file', 'max:20240'],
         ]);
 
         return $validated;
