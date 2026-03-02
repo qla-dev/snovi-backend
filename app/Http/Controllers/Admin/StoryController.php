@@ -182,9 +182,9 @@ class StoryController extends Controller
             'is_favorite' => ['sometimes', 'boolean'],
             'audio_url' => ['nullable', 'string', 'max:500'],
             'published_at' => ['nullable', 'date'],
-            // Allow images up to 5 MB
-            'image_upload' => ['nullable', 'image', 'max:20240'],
-            'audio_upload' => ['nullable', 'file', 'max:20240'],
+            // Allow uploads up to 100 MB (Laravel max rule is in KB)
+            'image_upload' => ['nullable', 'image', 'max:102400'],
+            'audio_upload' => ['nullable', 'file', 'max:102400'],
         ]);
 
         return $validated;
