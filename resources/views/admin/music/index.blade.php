@@ -14,7 +14,7 @@
                 <tr>
                     <th>ID</th>
                     <th>Naziv</th>
-                    <th>Fajl</th>
+                    <th>Audio</th>
                     <th>Povezano</th>
                     <th class="text-end" style="width:180px;">Akcije</th>
                 </tr>
@@ -24,14 +24,20 @@
                     <tr>
                         <td class="fw-semibold">#{{ $music->id }}</td>
                         <td>{{ $music->name }}</td>
-                        <td class="text-muted small">{{ $music->file ?: '-' }}</td>
+                        <td>
+                            @if($music->file)
+                                <span class="badge bg-success">Ucitano</span>
+                            @else
+                                <span class="badge bg-secondary">Nema</span>
+                            @endif
+                        </td>
                         <td>{{ $music->stories_count }}</td>
                         <td class="text-end">
                             <div class="d-inline-flex gap-2 align-items-center justify-content-end">
                                 <a href="{{ route('admin.music.edit', $music) }}" class="btn btn-sm btn-primary">Uredi</a>
                                 <form action="{{ route('admin.music.destroy', $music) }}" method="POST" class="d-inline">
                                     @csrf @method('DELETE')
-                                    <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Obrisati?')">Obrisi</button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Obrisati?')">Obriši</button>
                                 </form>
                             </div>
                         </td>

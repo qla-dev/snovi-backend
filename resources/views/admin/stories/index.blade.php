@@ -76,7 +76,7 @@
                                 <a href="{{ route('admin.stories.edit', $story) }}" class="btn btn-sm btn-primary">Uredi</a>
                                 <form action="{{ route('admin.stories.destroy', $story) }}" method="POST" class="d-inline">
                                     @csrf @method('DELETE')
-                                    <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Obrisati?')">Obrisi</button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Obrisati?')">Obriđi</button>
                                 </form>
                             </div>
                         </td>

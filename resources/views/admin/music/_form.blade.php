@@ -21,13 +21,6 @@
 
 @if ($music->file)
     <div>
-        <label class="form-label d-block">Trenutni fajl</label>
-        <div class="text-muted small">{{ $music->file }}</div>
-    </div>
-@endif
-
-@if ($music->file)
-    <div>
         <label class="form-label d-block">Pregled audio snimka</label>
         <audio controls style="width:100%;">
             <source src="{{ $music->file }}">
