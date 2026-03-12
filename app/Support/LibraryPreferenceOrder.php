@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 
 class LibraryPreferenceOrder
@@ -17,7 +18,7 @@ class LibraryPreferenceOrder
         return self::parseIds($request->query('preferred_subcategory_ids', []));
     }
 
-    public static function applyIdPriority(Builder $query, string $column, array $ids): Builder
+    public static function applyIdPriority(Builder|Relation $query, string $column, array $ids): Builder|Relation
     {
         if (!$ids) {
             return $query;
@@ -37,7 +38,7 @@ class LibraryPreferenceOrder
         );
     }
 
-    public static function applyNullableSort(Builder $query, string $sortColumn, string $labelColumn): Builder
+    public static function applyNullableSort(Builder|Relation $query, string $sortColumn, string $labelColumn): Builder|Relation
     {
         return $query
             ->orderByRaw("CASE WHEN {$sortColumn} IS NULL THEN 1 ELSE 0 END")
