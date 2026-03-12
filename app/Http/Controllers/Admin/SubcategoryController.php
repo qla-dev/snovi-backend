@@ -71,7 +71,7 @@ class SubcategoryController extends Controller
      */
     public function edit(Subcategory $subcategory)
     {
-        $categories = Category::orderBy('sort_order')->get();
+        $categories = Category::orderBy('label')->get();
 
         return view('admin.subcategories.edit', compact('subcategory', 'categories'));
     }
