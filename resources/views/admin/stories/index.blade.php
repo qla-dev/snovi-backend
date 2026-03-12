@@ -15,7 +15,7 @@
                     <th>Naslov</th>
                     <th>Kategorija</th>
                     <th>Trajanje</th>
-                    <th>Datum kreiranja</th>
+                    <th>Datum</th>
                     <th>Objava</th>
                     <th>Status</th>
                     <th>Efekti</th>
