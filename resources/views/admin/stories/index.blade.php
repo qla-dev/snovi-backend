@@ -8,7 +8,7 @@
 
 <div class="card p-3">
     <div class="table-responsive">
-        <table class="table align-middle datatable" data-default-order-column="4" data-default-order-dir="asc">
+        <table class="table align-middle datatable" data-default-order-column="4" data-default-order-dir="desc">
             <thead>
                 <tr>
                     <th>ID</th>
