@@ -222,6 +222,7 @@
                 <a class="nav-link {{ request()->routeIs('admin.stories.*') ? 'active' : '' }}" href="{{ route('admin.stories.index') }}">Priče</a>
                 <a class="nav-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}" href="{{ route('admin.categories.index') }}">Kategorije</a>
                 <a class="nav-link {{ request()->routeIs('admin.subcategories.*') ? 'active' : '' }}" href="{{ route('admin.subcategories.index') }}">Potkategorije</a>
+                <a class="nav-link {{ request()->routeIs('admin.music.*') ? 'active' : '' }}" href="{{ route('admin.music.index') }}">Muzika</a>
             </div>
             <form action="{{ route('logout') }}" method="POST" class="d-flex">
                 @csrf
@@ -275,6 +276,12 @@
             const disableSortTargets = [];
             const defaultOrderColumn = Number.parseInt(tbl.dataset.defaultOrderColumn ?? '', 10);
             const defaultOrderDir = (tbl.dataset.defaultOrderDir || 'asc').toLowerCase() === 'desc' ? 'desc' : 'asc';
+            const tbody = tbl.tBodies[0];
+
+            if (tbody?.querySelector('td[colspan]')) {
+                tbody.innerHTML = '';
+            }
+
             tbl.querySelectorAll('th').forEach((th, idx) => {
                 const text = (th.textContent || '').trim().toLowerCase();
                 if (text === 'akcije' || text === 'efekti') {
@@ -295,6 +302,7 @@
                     lengthMenu: 'Prikaži _MENU_',
                     info: 'Prikaz _START_ - _END_ od _TOTAL_',
                     paginate: { previous: 'Prethodno', next: 'Sljedeće' },
+                    emptyTable: 'Nema unosa',
                     infoEmpty: 'Nema podataka',
                     zeroRecords: 'Nema rezultata'
                 }

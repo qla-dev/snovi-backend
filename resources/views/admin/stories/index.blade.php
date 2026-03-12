@@ -2,19 +2,20 @@
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">Priče</h4>
-    <a href="{{ route('admin.stories.create') }}" class="btn btn-primary">+ Nova priča</a>
+    <h4 class="mb-0">Price</h4>
+    <a href="{{ route('admin.stories.create') }}" class="btn btn-primary">+ Nova prica</a>
 </div>
 
 <div class="card p-3">
     <div class="table-responsive">
-        <table class="table align-middle datatable" data-default-order-column="4" data-default-order-dir="desc">
+        <table class="table align-middle datatable" data-default-order-column="5" data-default-order-dir="desc">
             <thead>
                 <tr>
                     <th>ID</th>
                     <th>Naslov</th>
                     <th>Kategorija</th>
                     <th>Trajanje</th>
+                    <th>Muzika</th>
                     <th>Datum</th>
                     <th>Objava</th>
                     <th>Status</th>
@@ -34,7 +35,15 @@
                             <div>{{ $story->category?->label }}</div>
                             <div class="text-muted small">{{ $story->subcategory?->label }}</div>
                         </td>
-                        <td>{{ $story->duration_label ?? '—' }}</td>
+                        <td>{{ $story->duration_label ?? '-' }}</td>
+                        <td>
+                            @if($story->music)
+                                <div>{{ $story->music->name }}</div>
+                                <div class="text-muted small">#{{ $story->music->id }}</div>
+                            @else
+                                <span class="text-muted">-</span>
+                            @endif
+                        </td>
                         <td data-order="{{ optional($story->created_at)->timestamp ?? 0 }}">
                             {{ optional($story->created_at)->format('d.m.Y') ?? '-' }}
                         </td>
@@ -47,9 +56,9 @@
                         </td>
                         <td>
                             @if($story->locked)
-                                <span class="badge bg-warning text-dark">Zaključano</span>
+                                <span class="badge bg-warning text-dark">Zakljucano</span>
                             @else
-                                <span class="badge bg-success">Otključano</span>
+                                <span class="badge bg-success">Otkljucano</span>
                             @endif
                             @if($story->is_favorite)
                                 <span class="badge bg-info text-dark">Favorit</span>
@@ -60,20 +69,20 @@
                         </td>
                         <td class="text-muted small">
                             @php $levels = collect($story->effects ?? [])->filter(fn($v) => $v > 0); @endphp
-                            {{ $levels->count() ? $levels->map(fn($v, $k) => "$k:$v")->implode(', ') : '—' }}
+                            {{ $levels->count() ? $levels->map(fn($v, $k) => "$k:$v")->implode(', ') : '-' }}
                         </td>
                         <td class="text-end">
                             <div class="d-inline-flex gap-2 align-items-center justify-content-end">
                                 <a href="{{ route('admin.stories.edit', $story) }}" class="btn btn-sm btn-primary">Uredi</a>
                                 <form action="{{ route('admin.stories.destroy', $story) }}" method="POST" class="d-inline">
                                     @csrf @method('DELETE')
-                                    <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Obrisati?')">Obriši</button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Obrisati?')">Obrisi</button>
                                 </form>
                             </div>
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="9" class="text-center text-muted">Nema unosa</td></tr>
+                    <tr><td colspan="10" class="text-center text-muted">Nema unosa</td></tr>
                 @endforelse
             </tbody>
         </table>

@@ -20,6 +20,7 @@ class Story extends Model
         'description',
         'category_id',
         'subcategory_id',
+        'music_id',
         'is_dummy',
         'locked',
         'is_favorite',
@@ -58,6 +59,11 @@ class Story extends Model
     public function subcategory()
     {
         return $this->belongsTo(Subcategory::class);
+    }
+
+    public function music()
+    {
+        return $this->belongsTo(Music::class);
     }
 
     public function getHasImageAttribute(): bool

@@ -43,6 +43,8 @@ class StoryResource extends JsonResource
             'category_label' => $this->category?->label,
             'subcategory' => $this->subcategory?->label,
             'subcategory_slug' => $this->subcategory?->slug,
+            'music_id' => $this->music_id,
+            'music' => $this->whenLoaded('music', fn () => new MusicResource($this->music)),
             'is_dummy' => $this->is_dummy,
             'locked' => $this->locked,
             'favorite' => $this->is_favorite,

@@ -40,7 +40,7 @@
 </div>
 
 <div class="row g-3">
-    <div class="col-md-6">
+    <div class="col-md-4">
         <label class="form-label">Kategorija</label>
         <select name="category_id" id="category-select" class="form-select" required>
             <option value="">Odaberi...</option>
@@ -49,13 +49,24 @@
             @endforeach
         </select>
     </div>
-    <div class="col-md-6">
+    <div class="col-md-4">
         <label class="form-label">Potkategorija</label>
         <select name="subcategory_id" id="subcategory-select" class="form-select">
             <option value="">--</option>
             @foreach($subcategories as $sub)
                 <option value="{{ $sub->id }}" data-category="{{ $sub->category_id }}" @selected(old('subcategory_id', $story->subcategory_id) == $sub->id)>
                     {{ $sub->label }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Muzika</label>
+        <select name="music_id" class="form-select">
+            <option value="">Bez muzike</option>
+            @foreach($musicItems as $music)
+                <option value="{{ $music->id }}" @selected(old('music_id', $story->music_id) == $music->id)>
+                    #{{ $music->id }} - {{ $music->name }}
                 </option>
             @endforeach
         </select>

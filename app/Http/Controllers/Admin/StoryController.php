@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Story;
 use App\Models\Category;
+use App\Models\Music;
 use App\Models\Subcategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -21,7 +22,7 @@ class StoryController extends Controller
      */
     public function index()
     {
-        $stories = Story::with(['category', 'subcategory'])
+        $stories = Story::with(['category', 'subcategory', 'music'])
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->get();
@@ -35,6 +36,7 @@ class StoryController extends Controller
     public function create()
     {
         $categories = Category::orderBy('label')->get();
+        $musicItems = Music::orderBy('name')->orderBy('id')->get();
         $subcategories = Subcategory::orderBy('label')->get();
 
         return view('admin.stories.create', [
@@ -42,6 +44,7 @@ class StoryController extends Controller
                 'effects' => array_fill_keys($this->effectKeys, 0),
             ]),
             'categories' => $categories,
+            'musicItems' => $musicItems,
             'subcategories' => $subcategories,
             'effectKeys' => $this->effectKeys,
         ]);
@@ -101,6 +104,7 @@ class StoryController extends Controller
     public function edit(Story $story)
     {
         $categories = Category::orderBy('label')->get();
+        $musicItems = Music::orderBy('name')->orderBy('id')->get();
         $subcategories = Subcategory::orderBy('label')->get();
 
         $story->effects = array_merge(
@@ -108,7 +112,7 @@ class StoryController extends Controller
             $story->effects ?? []
         );
 
-        return view('admin.stories.edit', compact('story', 'categories', 'subcategories') + ['effectKeys' => $this->effectKeys]);
+        return view('admin.stories.edit', compact('story', 'categories', 'subcategories', 'musicItems') + ['effectKeys' => $this->effectKeys]);
     }
 
     /**
@@ -176,6 +180,7 @@ class StoryController extends Controller
             'description' => ['nullable', 'string'],
             'category_id' => ['required', 'exists:categories,id'],
             'subcategory_id' => ['nullable', 'exists:subcategories,id'],
+            'music_id' => ['nullable', 'exists:music,id'],
             'is_dummy' => ['sometimes', 'boolean'],
             'locked' => ['sometimes', 'boolean'],
             'is_favorite' => ['sometimes', 'boolean'],

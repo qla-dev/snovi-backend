@@ -14,7 +14,7 @@ class StoryController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Story::with(['category', 'subcategory'])
+        $query = Story::with(['category', 'subcategory', 'music'])
             ->orderByDesc('published_at')
             ->orderByDesc('id');
 
@@ -61,7 +61,7 @@ class StoryController extends Controller
     public function recentPublished(Request $request)
     {
         $limit = min(max($request->integer('limit', 10), 1), 50);
-        $stories = Story::with(['category', 'subcategory'])
+        $stories = Story::with(['category', 'subcategory', 'music'])
             ->where('is_dummy', false)
             ->whereNotNull('image_url')
             ->where(function ($q) {
@@ -89,7 +89,7 @@ class StoryController extends Controller
      */
     public function show(Story $story)
     {
-        $story->load(['category', 'subcategory']);
+        $story->load(['category', 'subcategory', 'music']);
 
         return new StoryResource($story);
     }
