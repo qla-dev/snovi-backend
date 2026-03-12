@@ -65,11 +65,19 @@
         <select name="music_id" class="form-select">
             <option value="">Bez muzike</option>
             @foreach($musicItems as $music)
-                <option value="{{ $music->id }}" @selected(old('music_id', $story->music_id) == $music->id)>
+                <option
+                    value="{{ $music->id }}"
+                    data-file="{{ $music->file }}"
+                    @selected(old('music_id', $story->music_id) == $music->id)
+                >
                     #{{ $music->id }} - {{ $music->name }}
                 </option>
             @endforeach
         </select>
+        <div class="mt-2" id="story-music-preview-wrap" style="display:none;">
+            <small class="text-muted d-block mb-1">Pregled povezane muzike</small>
+            <audio id="story-music-preview" controls style="width:100%; display:none;"></audio>
+        </div>
     </div>
 </div>
 
@@ -167,6 +175,9 @@
   const audioUrlInput = document.querySelector('input[name="audio_url"]');
   const audioUploadInput = document.querySelector('input[name="audio_upload"]');
   const audioPreview = document.getElementById('story-audio-preview');
+  const musicSelect = document.querySelector('select[name="music_id"]');
+  const musicPreviewWrap = document.getElementById('story-music-preview-wrap');
+  const musicPreview = document.getElementById('story-music-preview');
   const categorySelect = document.getElementById('category-select');
   const subcategorySelect = document.getElementById('subcategory-select');
   const statusBar = document.getElementById('upload-status-inline') || document.getElementById('upload-status');
@@ -226,6 +237,20 @@
     updateStatusVisibility();
   }
 
+  function showMusicPreview(src) {
+    if (!musicPreview || !musicPreviewWrap) return;
+    if (src) {
+      musicPreview.src = src;
+      musicPreview.style.display = 'block';
+      musicPreviewWrap.style.display = 'block';
+      musicPreview.load();
+    } else {
+      musicPreview.removeAttribute('src');
+      musicPreview.style.display = 'none';
+      musicPreviewWrap.style.display = 'none';
+    }
+  }
+
   if (imgUrlInput) {
     imgUrlInput.addEventListener('input', (e) => {
       showImage(e.target.value.trim());
@@ -270,6 +295,12 @@
         fileSelected('audio');
       }
     });
+  }
+
+  function syncMusicPreview() {
+    const selectedOption = musicSelect?.selectedOptions?.[0];
+    const src = selectedOption?.dataset?.file?.trim?.() || '';
+    showMusicPreview(src);
   }
 
   function startProgress() {
@@ -398,6 +429,11 @@
   if (categorySelect) {
     categorySelect.addEventListener('change', filterSubcategories);
     filterSubcategories();
+  }
+
+  if (musicSelect) {
+    musicSelect.addEventListener('change', syncMusicPreview);
+    syncMusicPreview();
   }
 })();
 </script>
