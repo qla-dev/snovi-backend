@@ -7,23 +7,30 @@ use App\Models\Subcategory;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Http\Resources\SubcategoryResource;
+use App\Support\LibraryPreferenceOrder;
 
 class SubcategoryController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $query = Subcategory::with('category')->orderBy('label');
+        $query = Subcategory::with('category');
+        $preferredCategoryIds = LibraryPreferenceOrder::preferredCategoryIds($request);
+        $preferredSubcategoryIds = LibraryPreferenceOrder::preferredSubcategoryIds($request);
 
-        if ($slug = request('category')) {
+        if ($slug = $request->query('category')) {
             $query->whereHas('category', fn ($q) => $q->where('slug', $slug));
         }
 
-        if ($categoryId = request('category_id')) {
+        if ($categoryId = $request->query('category_id')) {
             $query->where('category_id', $categoryId);
         }
+
+        LibraryPreferenceOrder::applyIdPriority($query, 'subcategories.category_id', $preferredCategoryIds);
+        LibraryPreferenceOrder::applyIdPriority($query, 'subcategories.id', $preferredSubcategoryIds);
+        LibraryPreferenceOrder::applyNullableSort($query, 'subcategories.sort', 'subcategories.label');
 
         return SubcategoryResource::collection($query->get());
     }

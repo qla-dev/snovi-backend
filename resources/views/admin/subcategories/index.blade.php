@@ -9,12 +9,13 @@
 <div class="card p-3">
     <h6 class="text-light mb-3">Sve potkategorije</h6>
     <div class="table-responsive">
-        <table class="table align-middle datatable">
+        <table class="table align-middle datatable" data-default-order-column="3">
             <thead>
                 <tr>
                     <th>Slug</th>
                     <th>Naziv</th>
                     <th>Kategorija</th>
+                    <th>Sort</th>
                     <th>Status</th>
                     <th class="text-end" style="width:180px;">Akcije</th>
                 </tr>
@@ -25,6 +26,7 @@
                         <td class="fw-semibold">{{ $sub->slug }}</td>
                         <td>{{ $sub->label }}</td>
                         <td class="text-muted">{{ $sub->category?->label ?? '-' }}</td>
+                        <td>{{ $sub->sort ?? '-' }}</td>
                         <td>
                             @if($sub->is_active)
                                 <span class="badge bg-success">Aktivna</span>
@@ -77,6 +79,10 @@
             <div>
                 <label class="form-label">Naziv</label>
                 <input type="text" name="label" class="form-control" placeholder="🔥 Popularno" required>
+            </div>
+            <div>
+                <label class="form-label">Sort</label>
+                <input type="number" name="sort" class="form-control" placeholder="Opcionalno">
             </div>
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" value="1" name="is_active" id="sub-active-modal" checked>

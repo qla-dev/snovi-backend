@@ -33,6 +33,10 @@
                 <input type="text" name="label" class="form-control" value="{{ old('label', $subcategory->label) }}" required>
             </div>
         </div>
+        <div>
+            <label class="form-label">Sort</label>
+            <input type="number" name="sort" class="form-control" value="{{ old('sort', $subcategory->sort) }}">
+        </div>
         <div class="d-flex align-items-center">
             <div class="form-check mt-1">
                 <input class="form-check-input" type="checkbox" name="is_active" value="1" id="is_active" {{ old('is_active', $subcategory->is_active) ? 'checked' : '' }}>

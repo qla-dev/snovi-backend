@@ -35,9 +35,18 @@ class StoryController extends Controller
      */
     public function create()
     {
-        $categories = Category::orderBy('label')->get();
+        $categories = Category::query()
+            ->orderByRaw('CASE WHEN sort IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('sort')
+            ->orderBy('label')
+            ->get();
         $musicItems = Music::orderBy('name')->orderBy('id')->get();
-        $subcategories = Subcategory::orderBy('label')->get();
+        $subcategories = Subcategory::query()
+            ->orderBy('category_id')
+            ->orderByRaw('CASE WHEN sort IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('sort')
+            ->orderBy('label')
+            ->get();
 
         return view('admin.stories.create', [
             'story' => new Story([
@@ -103,9 +112,18 @@ class StoryController extends Controller
      */
     public function edit(Story $story)
     {
-        $categories = Category::orderBy('label')->get();
+        $categories = Category::query()
+            ->orderByRaw('CASE WHEN sort IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('sort')
+            ->orderBy('label')
+            ->get();
         $musicItems = Music::orderBy('name')->orderBy('id')->get();
-        $subcategories = Subcategory::orderBy('label')->get();
+        $subcategories = Subcategory::query()
+            ->orderBy('category_id')
+            ->orderByRaw('CASE WHEN sort IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('sort')
+            ->orderBy('label')
+            ->get();
 
         $story->effects = array_merge(
             array_fill_keys($this->effectKeys, 0),

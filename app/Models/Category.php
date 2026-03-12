@@ -13,16 +13,18 @@ class Category extends Model
         'slug',
         'label',
         'description',
+        'sort',
         'is_active',
     ];
 
     protected $casts = [
+        'sort' => 'integer',
         'is_active' => 'boolean',
     ];
 
     public function subcategories()
     {
-        return $this->hasMany(Subcategory::class)->orderBy('label');
+        return $this->hasMany(Subcategory::class);
     }
 
     public function stories()

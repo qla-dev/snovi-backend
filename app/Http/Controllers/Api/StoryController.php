@@ -34,8 +34,16 @@ class StoryController extends Controller
             $query->whereHas('category', fn ($q) => $q->where('slug', $category));
         }
 
+        if ($categoryId = $request->integer('category_id')) {
+            $query->where('category_id', $categoryId);
+        }
+
         if ($subcategory = $request->query('subcategory')) {
             $query->whereHas('subcategory', fn ($q) => $q->where('slug', $subcategory));
+        }
+
+        if ($subcategoryId = $request->integer('subcategory_id')) {
+            $query->where('subcategory_id', $subcategoryId);
         }
 
         if ($request->boolean('favorite')) {

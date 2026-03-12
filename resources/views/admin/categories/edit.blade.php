@@ -27,6 +27,10 @@
             <label class="form-label">Opis</label>
             <textarea name="description" class="form-control" rows="3">{{ old('description', $category->description) }}</textarea>
         </div>
+        <div>
+            <label class="form-label">Sort</label>
+            <input type="number" name="sort" class="form-control" value="{{ old('sort', $category->sort) }}">
+        </div>
         <div class="d-flex align-items-center">
             <div class="form-check mt-1">
                 <input class="form-check-input" type="checkbox" name="is_active" value="1" id="is_active" {{ old('is_active', $category->is_active) ? 'checked' : '' }}>

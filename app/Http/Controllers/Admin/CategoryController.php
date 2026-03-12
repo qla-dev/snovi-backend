@@ -13,7 +13,11 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $categories = Category::orderBy('label')->get();
+        $categories = Category::query()
+            ->orderByRaw('CASE WHEN sort IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('sort')
+            ->orderBy('label')
+            ->get();
 
         return view('admin.categories.index', compact('categories'));
     }
@@ -35,6 +39,7 @@ class CategoryController extends Controller
             'slug' => ['required', 'string', 'max:50', 'unique:categories,slug'],
             'label' => ['required', 'string', 'max:120'],
             'description' => ['nullable', 'string'],
+            'sort' => ['nullable', 'integer'],
             'is_active' => ['sometimes', 'boolean'],
         ]);
 
@@ -70,6 +75,7 @@ class CategoryController extends Controller
             'slug' => ['required', 'string', 'max:50', 'unique:categories,slug,' . $category->id],
             'label' => ['required', 'string', 'max:120'],
             'description' => ['nullable', 'string'],
+            'sort' => ['nullable', 'integer'],
             'is_active' => ['sometimes', 'boolean'],
         ]);
 

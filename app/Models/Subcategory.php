@@ -13,10 +13,12 @@ class Subcategory extends Model
         'category_id',
         'slug',
         'label',
+        'sort',
         'is_active',
     ];
 
     protected $casts = [
+        'sort' => 'integer',
         'is_active' => 'boolean',
     ];
 

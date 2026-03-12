@@ -6,15 +6,30 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Http\Resources\CategoryResource;
+use App\Support\LibraryPreferenceOrder;
 
 class CategoryController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-            $categories = Category::with('subcategories')->orderBy('label')->get();
+            $preferredCategoryIds = LibraryPreferenceOrder::preferredCategoryIds($request);
+            $preferredSubcategoryIds = LibraryPreferenceOrder::preferredSubcategoryIds($request);
+
+            $query = Category::query()->with([
+                'subcategories' => function ($subcategories) use ($preferredSubcategoryIds) {
+                    $subcategories->reorder();
+                    LibraryPreferenceOrder::applyIdPriority($subcategories, 'subcategories.id', $preferredSubcategoryIds);
+                    LibraryPreferenceOrder::applyNullableSort($subcategories, 'subcategories.sort', 'subcategories.label');
+                },
+            ]);
+
+            LibraryPreferenceOrder::applyIdPriority($query, 'categories.id', $preferredCategoryIds);
+            LibraryPreferenceOrder::applyNullableSort($query, 'categories.sort', 'categories.label');
+
+            $categories = $query->get();
 
             return CategoryResource::collection($categories);
     }
@@ -30,9 +45,17 @@ class CategoryController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Category $category)
+    public function show(Request $request, Category $category)
     {
-        $category->load('subcategories');
+        $preferredSubcategoryIds = LibraryPreferenceOrder::preferredSubcategoryIds($request);
+
+        $category->load([
+            'subcategories' => function ($subcategories) use ($preferredSubcategoryIds) {
+                $subcategories->reorder();
+                LibraryPreferenceOrder::applyIdPriority($subcategories, 'subcategories.id', $preferredSubcategoryIds);
+                LibraryPreferenceOrder::applyNullableSort($subcategories, 'subcategories.sort', 'subcategories.label');
+            },
+        ]);
 
         return new CategoryResource($category);
     }

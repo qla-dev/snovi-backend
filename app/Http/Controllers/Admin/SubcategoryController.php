@@ -16,9 +16,15 @@ class SubcategoryController extends Controller
     {
         $subcategories = Subcategory::with('category')
             ->orderBy('category_id')
+            ->orderByRaw('CASE WHEN sort IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('sort')
             ->orderBy('label')
             ->get();
-        $categories = Category::orderBy('label')->get();
+        $categories = Category::query()
+            ->orderByRaw('CASE WHEN sort IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('sort')
+            ->orderBy('label')
+            ->get();
 
         return view('admin.subcategories.index', compact('subcategories', 'categories'));
     }
@@ -40,6 +46,7 @@ class SubcategoryController extends Controller
             'category_id' => ['required', 'exists:categories,id'],
             'slug' => ['required', 'string', 'max:80'],
             'label' => ['required', 'string', 'max:180'],
+            'sort' => ['nullable', 'integer'],
             'is_active' => ['sometimes', 'boolean'],
         ]);
 
@@ -71,7 +78,11 @@ class SubcategoryController extends Controller
      */
     public function edit(Subcategory $subcategory)
     {
-        $categories = Category::orderBy('label')->get();
+        $categories = Category::query()
+            ->orderByRaw('CASE WHEN sort IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('sort')
+            ->orderBy('label')
+            ->get();
 
         return view('admin.subcategories.edit', compact('subcategory', 'categories'));
     }
@@ -85,6 +96,7 @@ class SubcategoryController extends Controller
             'category_id' => ['required', 'exists:categories,id'],
             'slug' => ['required', 'string', 'max:80'],
             'label' => ['required', 'string', 'max:180'],
+            'sort' => ['nullable', 'integer'],
             'is_active' => ['sometimes', 'boolean'],
         ]);
 

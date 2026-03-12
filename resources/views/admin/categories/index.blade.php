@@ -9,11 +9,12 @@
 <div class="card p-3">
     <h6 class="text-light mb-3">Sve kategorije</h6>
     <div class="table-responsive">
-        <table class="table align-middle datatable">
+        <table class="table align-middle datatable" data-default-order-column="2">
             <thead>
                 <tr>
                     <th>Slug</th>
                     <th>Naziv</th>
+                    <th>Sort</th>
                     <th>Status</th>
                     <th class="text-end" style="width:180px;">Akcije</th>
                 </tr>
@@ -23,6 +24,7 @@
                     <tr>
                         <td class="fw-semibold">{{ $category->slug }}</td>
                         <td>{{ $category->label }}</td>
+                        <td>{{ $category->sort ?? '-' }}</td>
                         <td>
                             @if($category->is_active)
                                 <span class="badge bg-success">Aktivna</span>
@@ -41,7 +43,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="6" class="text-center text-muted">Nema unosa</td></tr>
+                    <tr><td colspan="5" class="text-center text-muted">Nema unosa</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -71,10 +73,14 @@
                 <label class="form-label">Opis</label>
                 <textarea name="description" class="form-control" rows="2" placeholder="Opcionalno"></textarea>
             </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="1" name="is_active" id="category-active-modal" checked>
-                    <label class="form-check-label" for="category-active-modal">Aktivna</label>
-                </div>
+            <div>
+                <label class="form-label">Sort</label>
+                <input type="number" name="sort" class="form-control" placeholder="Opcionalno">
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="1" name="is_active" id="category-active-modal" checked>
+                <label class="form-check-label" for="category-active-modal">Aktivna</label>
+            </div>
         </form>
       </div>
       <div class="modal-footer border-0 d-flex justify-content-between">
