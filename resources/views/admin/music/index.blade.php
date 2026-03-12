@@ -26,7 +26,7 @@
                         <td>{{ $music->name }}</td>
                         <td>
                             @if($music->file)
-                                <span class="badge bg-success">Ucitano</span>
+                                <span class="badge bg-success">Učitano</span>
                             @else
                                 <span class="badge bg-secondary">Nema</span>
                             @endif

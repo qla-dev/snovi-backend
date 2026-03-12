@@ -14,9 +14,6 @@
         accept="audio/mpeg,audio/mp3,audio/x-m4a,audio/m4a,audio/mp4,audio/wav,audio/x-wav"
         @required(!$music->exists)
     >
-    @if($music->exists)
-        <small class="text-muted">Ostavi prazno ako ne mijenjas trenutni audio fajl.</small>
-    @endif
 </div>
 
 @if ($music->file)

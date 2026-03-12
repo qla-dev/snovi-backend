@@ -14,7 +14,7 @@
         @csrf
         @method('PUT')
         @include('admin.music._form')
-        <div class="text-muted small">ID: #{{ $music->id }} | Povezane price: {{ $music->stories_count }}</div>
+        <div class="text-muted small">ID: #{{ $music->id }} | Povezane priče: {{ $music->stories_count }}</div>
     </form>
 </div>
 @endsection
