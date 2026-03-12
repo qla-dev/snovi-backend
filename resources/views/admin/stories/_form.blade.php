@@ -74,10 +74,6 @@
                 </option>
             @endforeach
         </select>
-        <div class="mt-2" id="story-music-preview-wrap" style="display:none;">
-            <small class="text-muted d-block mb-1">Pregled povezane muzike</small>
-            <audio id="story-music-preview" controls style="width:100%; display:none;"></audio>
-        </div>
     </div>
 </div>
 
@@ -109,6 +105,10 @@
                     <source src="{{ Storage::url($story->audio_path) }}">
                 @endif
             </audio>
+        </div>
+        <div class="mt-3" id="story-music-preview-wrap" style="display:none;">
+            <small class="text-muted d-block mb-1">Pregled povezane muzike</small>
+            <audio id="story-music-preview" controls style="width:100%; display:none;"></audio>
         </div>
     </div>
 </div>
@@ -241,6 +241,7 @@
     if (!musicPreview || !musicPreviewWrap) return;
     if (src) {
       musicPreview.src = src;
+      musicPreview.volume = 0.2;
       musicPreview.style.display = 'block';
       musicPreviewWrap.style.display = 'block';
       musicPreview.load();
