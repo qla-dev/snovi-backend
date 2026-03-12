@@ -8,13 +8,14 @@
 
 <div class="card p-3">
     <div class="table-responsive">
-        <table class="table align-middle datatable">
+        <table class="table align-middle datatable" data-default-order-column="4" data-default-order-dir="asc">
             <thead>
                 <tr>
                     <th>ID</th>
                     <th>Naslov</th>
                     <th>Kategorija</th>
                     <th>Trajanje</th>
+                    <th>Datum kreiranja</th>
                     <th>Objava</th>
                     <th>Status</th>
                     <th>Efekti</th>
@@ -34,6 +35,9 @@
                             <div class="text-muted small">{{ $story->subcategory?->label }}</div>
                         </td>
                         <td>{{ $story->duration_label ?? '—' }}</td>
+                        <td data-order="{{ optional($story->created_at)->timestamp ?? 0 }}">
+                            {{ optional($story->created_at)->format('d.m.Y') ?? '-' }}
+                        </td>
                         <td>
                             @if($story->publish_state === 'objavljeno')
                                 <span class="badge bg-success">Objavljeno</span>
@@ -56,7 +60,7 @@
                         </td>
                         <td class="text-muted small">
                             @php $levels = collect($story->effects ?? [])->filter(fn($v) => $v > 0); @endphp
-                            {{ $levels->count() ? $levels->map(fn($v,$k)=>"$k:$v")->implode(', ') : '—' }}
+                            {{ $levels->count() ? $levels->map(fn($v, $k) => "$k:$v")->implode(', ') : '—' }}
                         </td>
                         <td class="text-end">
                             <div class="d-inline-flex gap-2 align-items-center justify-content-end">
@@ -69,7 +73,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="text-center text-muted">Nema unosa</td></tr>
+                    <tr><td colspan="9" class="text-center text-muted">Nema unosa</td></tr>
                 @endforelse
             </tbody>
         </table>

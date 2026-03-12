@@ -22,8 +22,7 @@ class StoryController extends Controller
     public function index()
     {
         $stories = Story::with(['category', 'subcategory'])
-            ->orderBy('is_dummy') // real content first
-            ->orderByDesc('published_at')
+            ->orderBy('created_at')
             ->orderByDesc('id')
             ->get();
 

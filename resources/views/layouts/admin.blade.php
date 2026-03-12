@@ -8,11 +8,36 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     <style>
+        :root { color-scheme: dark; }
         body { background: #0f172a; color: #e5e7eb; }
         a { text-decoration: none; }
         .card { background: #111827; border-color: #1f2937; }
-        .form-control, .form-select { background: #0b1220; color: #e5e7eb; border-color: #1f2937; }
-        .form-control:focus, .form-select:focus { background: #0b1220; color: #fff; border-color: #8b5cf6; box-shadow: none; }
+        .form-control, .form-select, select {
+            background: #0b1220;
+            color: #e5e7eb !important;
+            border-color: #1f2937;
+            -webkit-text-fill-color: #e5e7eb;
+            opacity: 1;
+        }
+        .form-control:focus, .form-select:focus, select:focus {
+            background: #0b1220;
+            color: #fff !important;
+            border-color: #8b5cf6;
+            -webkit-text-fill-color: #fff;
+            box-shadow: none;
+        }
+        .form-select,
+        .dataTables_wrapper .dataTables_length select {
+            min-width: 5rem;
+            padding-right: 2.5rem;
+        }
+        select option,
+        select optgroup,
+        .form-select option,
+        .form-select optgroup {
+            background: #0b1220;
+            color: #e5e7eb;
+        }
         .form-control[type="file"] {
             background: #0b1220;
             color: #e5e7eb;
@@ -166,9 +191,10 @@
             color: #e5e7eb;
         }
         .dataTables_wrapper .dataTables_length select {
-            color: #fff;
+            color: #fff !important;
             background: #0b1220;
             border-color: #1f2937;
+            -webkit-text-fill-color: #fff;
         }
         /* Force selects to be clickable */
         select, .form-select { cursor: pointer; }
@@ -247,6 +273,8 @@
         const tables = document.querySelectorAll('table.datatable');
         tables.forEach((tbl) => {
             const disableSortTargets = [];
+            const defaultOrderColumn = Number.parseInt(tbl.dataset.defaultOrderColumn ?? '', 10);
+            const defaultOrderDir = (tbl.dataset.defaultOrderDir || 'asc').toLowerCase() === 'desc' ? 'desc' : 'asc';
             tbl.querySelectorAll('th').forEach((th, idx) => {
                 const text = (th.textContent || '').trim().toLowerCase();
                 if (text === 'akcije' || text === 'efekti') {
@@ -256,8 +284,9 @@
             new DataTable(tbl, {
                 paging: true,
                 searching: true,
-                pageLength: 7,
-                order: [],
+                pageLength: 20,
+                lengthMenu: [10, 20, 25, 50, 100],
+                order: Number.isInteger(defaultOrderColumn) ? [[defaultOrderColumn, defaultOrderDir]] : [],
                 columnDefs: disableSortTargets.length
                     ? [{ orderable: false, targets: disableSortTargets }]
                     : [],
