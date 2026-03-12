@@ -44,7 +44,7 @@ class StoryController extends Controller
             $query->where('locked', false);
         }
 
-        $limit = min(max($request->integer('limit', 100), 1), 200);
+        $limit = min(max($request->integer('limit', 100), 1), 1000);
 
         $stories = $query->limit($limit)->get();
 
