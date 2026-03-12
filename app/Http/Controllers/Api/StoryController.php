@@ -18,6 +18,10 @@ class StoryController extends Controller
             ->orderByDesc('published_at')
             ->orderByDesc('id');
 
+        if (!$request->boolean('include_dummy')) {
+            $query->where('is_dummy', false);
+        }
+
         if ($search = $request->query('q')) {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
@@ -58,6 +62,7 @@ class StoryController extends Controller
     {
         $limit = min(max($request->integer('limit', 10), 1), 50);
         $stories = Story::with(['category', 'subcategory'])
+            ->where('is_dummy', false)
             ->whereNotNull('image_url')
             ->where(function ($q) {
                 $q->whereNotNull('audio_url')
