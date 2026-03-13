@@ -64,11 +64,11 @@ class StoryController extends Controller
     }
 
     /**
-     * Return latest published stories (with image and audio) capped at 10.
+     * Return published stories with image and audio.
      */
     public function recentPublished(Request $request)
     {
-        $limit = min(max($request->integer('limit', 10), 1), 50);
+        $limit = min(max($request->integer('limit', 50), 1), 1000);
         $stories = Story::with(['category', 'subcategory', 'music'])
             ->where('is_dummy', false)
             ->whereNotNull('image_url')
