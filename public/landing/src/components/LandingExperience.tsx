@@ -477,6 +477,7 @@ export function useLandingExperience() {
   const loadedMusicSourceRef = useRef<string | null>(null);
   const selectedStoryRef = useRef<Story | null>(null);
   const effectLevelsRef = useRef<MixerLevels>(createEmptyMixerLevels());
+  const pendingStoryDefaultsOnPlayRef = useRef(false);
 
   useEffect(() => {
     if (typeof Audio === 'undefined') {
@@ -609,6 +610,19 @@ export function useLandingExperience() {
     return stories.find((story) => story.id === selectedStoryId) ?? null;
   }, [selectedStoryId, stories]);
 
+  const hasActiveMixerLevels = useCallback((levels: MixerLevels) => {
+    return Object.values(levels).some((level) => clampMixerLevel(level) > 0);
+  }, []);
+
+  const applyCurrentEffectLevels = useCallback((nextLevels: MixerLevels) => {
+    effectLevelsRef.current = nextLevels;
+    setEffectLevelsState(nextLevels);
+  }, []);
+
+  const clearEffectLevels = useCallback(() => {
+    applyCurrentEffectLevels(createEmptyMixerLevels());
+  }, [applyCurrentEffectLevels]);
+
   const pauseAuxiliaryPlayback = useCallback(() => {
     const musicAudio = musicAudioRef.current;
     if (musicAudio) {
@@ -671,7 +685,9 @@ export function useLandingExperience() {
 
   const syncAuxiliaryPlayback = useCallback(
     async (playing: boolean, story = selectedStoryRef.current, levels = effectLevelsRef.current) => {
-      if (!playing || !story?.sound) {
+      const hasActiveLevels = hasActiveMixerLevels(levels);
+
+      if (!story || (!playing && !hasActiveLevels)) {
         prepareMusicAudio(story);
         pauseAuxiliaryPlayback();
         return;
@@ -750,7 +766,7 @@ export function useLandingExperience() {
         // Ignore autoplay/load failures and retry on the next playback sync.
       }
     },
-    [pauseAuxiliaryPlayback, prepareMusicAudio],
+    [hasActiveMixerLevels, pauseAuxiliaryPlayback, prepareMusicAudio],
   );
 
   useEffect(() => {
@@ -778,10 +794,11 @@ export function useLandingExperience() {
     pauseAuxiliaryPlayback();
     prepareMusicAudio(selectedStory);
 
-    const nextLevels = defaultsForStory(selectedStory);
-    effectLevelsRef.current = nextLevels;
-    setEffectLevelsState(nextLevels);
-  }, [audioElement, pauseAuxiliaryPlayback, prepareMusicAudio, selectedStory]);
+    const nextLevels = pendingResumeRef.current
+      ? defaultsForStory(selectedStory)
+      : createEmptyMixerLevels();
+    applyCurrentEffectLevels(nextLevels);
+  }, [applyCurrentEffectLevels, audioElement, pauseAuxiliaryPlayback, prepareMusicAudio, selectedStory]);
 
   useEffect(() => {
     if (!audioElement) {
@@ -800,22 +817,37 @@ export function useLandingExperience() {
     const handlePlaying = () => {
       setIsAudioLoading(false);
       setIsPlaying(true);
+
+      if (pendingStoryDefaultsOnPlayRef.current) {
+        pendingStoryDefaultsOnPlayRef.current = false;
+        const nextLevels = defaultsForStory(selectedStoryRef.current);
+        applyCurrentEffectLevels(nextLevels);
+        void syncAuxiliaryPlayback(true, selectedStoryRef.current, nextLevels);
+        return;
+      }
+
       void syncAuxiliaryPlayback(true);
     };
     const handlePause = () => {
       setIsPlaying(false);
+      pendingStoryDefaultsOnPlayRef.current = false;
       pauseAuxiliaryPlayback();
+      clearEffectLevels();
     };
     const handleWaiting = () => setIsAudioLoading(true);
     const handleEnded = () => {
       setIsPlaying(false);
       setProgressRatio(0);
+      pendingStoryDefaultsOnPlayRef.current = false;
       pauseAuxiliaryPlayback();
+      clearEffectLevels();
     };
     const handleError = () => {
       setIsPlaying(false);
       setIsAudioLoading(false);
+      pendingStoryDefaultsOnPlayRef.current = false;
       pauseAuxiliaryPlayback();
+      clearEffectLevels();
     };
 
     audioElement.addEventListener('timeupdate', handleTimeUpdate);
@@ -841,7 +873,7 @@ export function useLandingExperience() {
       audioElement.removeEventListener('ended', handleEnded);
       audioElement.removeEventListener('error', handleError);
     };
-  }, [audioElement, pauseAuxiliaryPlayback, selectedStory?.durationSeconds, syncAuxiliaryPlayback]);
+  }, [applyCurrentEffectLevels, audioElement, clearEffectLevels, pauseAuxiliaryPlayback, selectedStory?.durationSeconds, syncAuxiliaryPlayback]);
 
   useEffect(() => {
     if (!audioElement) {
@@ -853,9 +885,11 @@ export function useLandingExperience() {
       audioElement.pause();
       audioElement.removeAttribute('src');
       audioElement.load();
+      pendingStoryDefaultsOnPlayRef.current = false;
       setIsPlaying(false);
       setIsAudioLoading(false);
       setProgressRatio(0);
+      clearEffectLevels();
       return;
     }
 
@@ -876,20 +910,17 @@ export function useLandingExperience() {
 
     setIsAudioLoading(true);
     void audioElement.play().catch(() => {
+      pendingStoryDefaultsOnPlayRef.current = false;
       setIsPlaying(false);
       setIsAudioLoading(false);
       pauseAuxiliaryPlayback();
+      clearEffectLevels();
     });
-  }, [audioElement, pauseAuxiliaryPlayback, selectedStory?.id, selectedStory?.sound]);
+  }, [audioElement, clearEffectLevels, pauseAuxiliaryPlayback, selectedStory?.id, selectedStory?.sound]);
 
   useEffect(() => {
     effectLevelsRef.current = effectLevels;
-
-    if (!audioElement || audioElement.paused) {
-      return;
-    }
-
-    void syncAuxiliaryPlayback(true, selectedStoryRef.current, effectLevels);
+    void syncAuxiliaryPlayback(Boolean(audioElement && !audioElement.paused), selectedStoryRef.current, effectLevels);
   }, [audioElement, effectLevels, syncAuxiliaryPlayback]);
 
   const setAudioRef = useCallback((node: HTMLAudioElement | null) => {
@@ -910,10 +941,12 @@ export function useLandingExperience() {
     }
 
     if (audioElement.paused) {
+      pendingStoryDefaultsOnPlayRef.current = true;
       setIsAudioLoading(true);
       try {
         await audioElement.play();
       } catch {
+        pendingStoryDefaultsOnPlayRef.current = false;
         setIsAudioLoading(false);
         setIsPlaying(false);
       }
@@ -954,12 +987,25 @@ export function useLandingExperience() {
 
   const setEffectLevel = useCallback((id: MixerLevelId, value: number) => {
     const nextLevel = clampMixerLevel(value);
+    let nextLevels: MixerLevels | null = null;
+
     setEffectLevelsState((previous) => {
-      const next = { ...previous, [id]: nextLevel };
-      effectLevelsRef.current = next;
-      return next;
+      nextLevels = { ...previous, [id]: nextLevel };
+      effectLevelsRef.current = nextLevels;
+      return nextLevels;
     });
-  }, []);
+
+    if (!audioElement || audioElement.paused) {
+      if (nextLevels) {
+        void syncAuxiliaryPlayback(false, selectedStoryRef.current, nextLevels);
+      }
+      return;
+    }
+
+    if (nextLevels) {
+      void syncAuxiliaryPlayback(true, selectedStoryRef.current, nextLevels);
+    }
+  }, [audioElement, syncAuxiliaryPlayback]);
 
   const resetFilters = useCallback(() => {
     setMainTab(ALL_MAIN_TAB_ID);
@@ -1224,7 +1270,7 @@ function StoryTile({
       }`}
     >
       <div
-        className={`relative cursor-pointer ${compact ? 'aspect-[6/5]' : 'aspect-[4/5]'}`}
+        className={`relative cursor-pointer ${compact ? 'aspect-[6/5]' : 'aspect-[3/5] md:aspect-[4/5]'}`}
         onClick={() => onSelect(story)}
         onKeyDown={(event) => {
           if (event.key === 'Enter' || event.key === ' ') {
@@ -1574,7 +1620,7 @@ export function FixedMiniPlayerBar({ lang, experience }: FixedMiniPlayerBarProps
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[140] md:px-6 md:pb-5">
-      <div className="pointer-events-auto w-full overflow-hidden border-t border-white/8 bg-[rgba(11,27,45,0.96)] shadow-none backdrop-blur-2xl md:mx-auto md:max-w-5xl md:rounded-[1.75rem] md:border md:shadow-[0_25px_80px_-20px_rgba(0,0,0,0.85)]">
+      <div className="pointer-events-auto overflow-hidden border-t border-white/8 bg-[rgba(11,27,45,0.96)] shadow-none backdrop-blur-2xl md:mx-auto md:max-w-5xl md:rounded-[1.75rem] md:border md:shadow-[0_25px_80px_-20px_rgba(0,0,0,0.85)]">
         <div
           className="flex min-h-[76px] items-center justify-between gap-3 px-3 py-3 sm:px-4 md:min-h-[84px] md:px-5"
           style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.75rem)' }}
@@ -1658,7 +1704,7 @@ function LibrarySectionSkeleton() {
       {Array.from({ length: 6 }).map((_, index) => (
         <div
           key={`library-skeleton-${index}`}
-          className="aspect-[4/5] animate-pulse rounded-[2rem] border border-white/5 bg-white/[0.03]"
+          className="aspect-[3/5] animate-pulse rounded-[2rem] border border-white/5 bg-white/[0.03] md:aspect-[4/5]"
         />
       ))}
     </div>
@@ -1700,13 +1746,13 @@ export function LandingLibrarySection({
           </motion.div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <div className="rounded-full border border-white/8 bg-white/[0.03] px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+            <div className="inline-flex h-12 items-center rounded-full border border-white/8 bg-white/[0.03] px-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
               {currentCount} {copy.previewResults}
             </div>
             <button
               type="button"
               onClick={experience.resetFilters}
-              className="rounded-full border border-white/10 bg-white/[0.02] px-8 py-3 text-xs font-black uppercase tracking-widest text-white transition hover:bg-white hover:text-black"
+              className="inline-flex h-12 items-center rounded-full border border-white/10 bg-white/[0.02] px-8 text-xs font-black uppercase tracking-widest text-white transition hover:bg-white hover:text-black"
             >
               {viewAllLabel}
             </button>
@@ -1739,7 +1785,7 @@ export function LandingLibrarySection({
               <button
                 type="button"
                 onClick={() => experience.changeMainTab(ALL_MAIN_TAB_ID)}
-                className={`shrink-0 cursor-pointer rounded-full px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] transition ${
+                className={`inline-flex h-12 shrink-0 cursor-pointer items-center rounded-full px-4 text-[11px] font-black uppercase tracking-[0.2em] transition ${
                   experience.mainTab === ALL_MAIN_TAB_ID
                     ? 'bg-violet-500 text-white'
                     : 'border border-white/8 bg-white/[0.02] text-slate-400'
@@ -1752,7 +1798,7 @@ export function LandingLibrarySection({
                   key={category.id}
                   type="button"
                   onClick={() => experience.changeMainTab(category.id)}
-                  className={`shrink-0 cursor-pointer rounded-full px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] transition ${
+                  className={`inline-flex h-12 shrink-0 cursor-pointer items-center rounded-full px-4 text-[11px] font-black uppercase tracking-[0.2em] transition ${
                     experience.mainTab === category.id
                       ? 'bg-violet-500 text-white'
                       : 'border border-white/8 bg-white/[0.02] text-slate-400'
@@ -1770,7 +1816,7 @@ export function LandingLibrarySection({
                 <button
                   type="button"
                   onClick={() => experience.setSubTab(ALL_SUB_TAB_ID)}
-                  className={`shrink-0 cursor-pointer rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] transition ${
+                  className={`inline-flex h-12 shrink-0 cursor-pointer items-center rounded-full px-4 text-[10px] font-black uppercase tracking-[0.18em] transition ${
                     experience.subTab === ALL_SUB_TAB_ID
                       ? 'bg-white text-black'
                       : 'border border-white/8 bg-[#0c1827] text-slate-400'
@@ -1783,7 +1829,7 @@ export function LandingLibrarySection({
                     key={subcategory.id}
                     type="button"
                     onClick={() => experience.setSubTab(subcategory.id)}
-                    className={`shrink-0 cursor-pointer rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] transition ${
+                    className={`inline-flex h-12 shrink-0 cursor-pointer items-center rounded-full px-4 text-[10px] font-black uppercase tracking-[0.18em] transition ${
                       experience.subTab === subcategory.id
                         ? 'bg-white text-black'
                         : 'border border-white/8 bg-[#0c1827] text-slate-400'

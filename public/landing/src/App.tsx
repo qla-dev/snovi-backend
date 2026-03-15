@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform } from 'motion/react';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { 
   Play, 
   Pause, 
@@ -29,9 +29,9 @@ import {
   Mail,
   Users
 } from 'lucide-react';
-import { theme } from './theme';
 import { translations, Language } from './translations';
 import {
+  type AmbientEffectId,
   FixedMiniPlayerBar,
   HeroDeviceShowcase,
   LandingLibrarySection,
@@ -49,23 +49,41 @@ const stories = [
 ];
 
 const effects = [
-  { id: 'rain', icon: CloudRain, label: { bs: 'Ljetna kiša', en: 'Summer Rain' }, color: 'text-blue-400' },
-  { id: 'forest', icon: Trees, label: { bs: 'Noćna šuma', en: 'Night Forest' }, color: 'text-emerald-400' },
-  { id: 'waves', icon: Waves, label: { bs: 'Valovi', en: 'Waves' }, color: 'text-cyan-400' },
-  { id: 'fire', icon: Flame, label: { bs: 'Vatra', en: 'Fire' }, color: 'text-orange-400' },
+  { id: 'rain' as AmbientEffectId, icon: CloudRain, label: { bs: 'Ljetna kiša', en: 'Summer Rain' }, color: 'text-blue-400' },
+  { id: 'leaves' as AmbientEffectId, icon: Trees, label: { bs: 'Noćna šuma', en: 'Night Forest' }, color: 'text-emerald-400' },
+  { id: 'ocean' as AmbientEffectId, icon: Waves, label: { bs: 'Valovi', en: 'Waves' }, color: 'text-cyan-400' },
+  { id: 'fire' as AmbientEffectId, icon: Flame, label: { bs: 'Vatra', en: 'Fire' }, color: 'text-orange-400' },
 ];
+
+function mixerLevelToPercent(level: number) {
+  return Math.round((Math.max(0, Math.min(10, level)) / 10) * 100);
+}
+
+function mixerPercentToLevel(percent: number) {
+  return Math.max(0, Math.min(10, percent / 10));
+}
+
+type AnimatedWidgetShellProps = {
+  children: React.ReactNode;
+  className?: string;
+  strength?: number;
+};
+
+function AnimatedWidgetShell({ children, className = '', strength = 1 }: AnimatedWidgetShellProps) {
+  return (
+    <div className={className}>
+      <div className="animated-widget" data-widget-strength={strength}>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   const [lang, setLang] = useState<Language>('bs');
-  const [activeSample, setActiveSample] = useState<number | null>(null);
-  const [activeEffects, setActiveEffects] = useState<string[]>([]);
   const [scrolled, setScrolled] = useState(false);
   const t = translations[lang];
   const landingExperience = useLandingExperience();
-
-  const { scrollYProgress } = useScroll();
-  const y1 = useTransform(scrollYProgress, [0, 1], [0, -200]);
-  const y2 = useTransform(scrollYProgress, [0, 1], [0, 200]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -73,19 +91,72 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const toggleLang = () => setLang(prev => prev === 'bs' ? 'en' : 'bs');
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
 
-  const toggleEffect = (id: string) => {
-    setActiveEffects(prev => 
-      prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]
-    );
-  };
+    const widgets = Array.from(document.querySelectorAll<HTMLElement>('.animated-widget'));
+
+    if (!widgets.length) {
+      return;
+    }
+
+    let frameId = 0;
+
+    const updateWidgets = () => {
+      frameId = 0;
+      const viewportHeight = window.innerHeight || 1;
+
+      widgets.forEach((widget) => {
+        const rect = widget.getBoundingClientRect();
+
+        if (rect.width === 0 && rect.height === 0) {
+          widget.style.setProperty('--widget-scale', '1');
+          return;
+        }
+
+        const centerOffset = (rect.top + rect.height / 2 - viewportHeight / 2) / (viewportHeight / 2);
+        const clampedOffset = Math.max(-1, Math.min(1, centerOffset));
+        const rawStrength = Number(widget.dataset.widgetStrength ?? '1');
+        const strength = Number.isFinite(rawStrength) ? rawStrength : 1;
+        const scale = 0.96 + (1 - Math.abs(clampedOffset)) * 0.08 * strength;
+
+        widget.style.setProperty('--widget-scale', scale.toFixed(3));
+      });
+    };
+
+    const queueUpdate = () => {
+      if (!frameId) {
+        frameId = window.requestAnimationFrame(updateWidgets);
+      }
+    };
+
+    updateWidgets();
+    window.addEventListener('scroll', queueUpdate, { passive: true });
+    window.addEventListener('resize', queueUpdate);
+
+    return () => {
+      if (frameId) {
+        window.cancelAnimationFrame(frameId);
+      }
+
+      window.removeEventListener('scroll', queueUpdate);
+      window.removeEventListener('resize', queueUpdate);
+
+      widgets.forEach((widget) => {
+        widget.style.removeProperty('--widget-scale');
+      });
+    };
+  }, []);
+
+  const toggleLang = () => setLang(prev => prev === 'bs' ? 'en' : 'bs');
 
   return (
     <div className="min-h-screen bg-[#050505] pb-28 font-sans text-white selection:bg-violet-500/30 md:pb-36">
       <audio ref={landingExperience.setAudioRef} preload="metadata" className="hidden" />
       {/* Navigation */}
-      <nav className={`fixed top-0 w-full z-[100] transition-all duration-500 px-6 py-4 flex justify-between items-center ${scrolled ? 'glass border-b border-white/5 py-3' : 'bg-transparent'}`}>
+      <nav className={`fixed inset-x-0 top-0 z-[100] flex items-center justify-between px-6 py-4 transition-[padding,background-color,border-color,backdrop-filter] duration-500 ${scrolled ? 'glass border-b border-white/5 py-3' : 'bg-transparent'}`}>
         <div className="flex items-center gap-3">
           <motion.div 
             whileHover={{ rotate: 15 }}
@@ -232,61 +303,68 @@ export default function App() {
             {/* Floating Badges - Repositioned and Responsive */}
             <div className="absolute inset-0 pointer-events-none z-30">
               {/* Brain Badge */}
-              <motion.div 
-                animate={{ y: [0, -20, 0] }}
-                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute top-[150px] right-4 left-auto z-40 flex w-[208px] rounded-2xl border-white/10 p-4 shadow-3xl glass pointer-events-auto md:top-0 md:left-[5%] md:right-auto md:w-auto md:translate-x-0 lg:rounded-3xl lg:p-6"
-              >
-                <div className="flex w-full items-center justify-end gap-3 text-right md:w-auto md:justify-start md:text-left lg:gap-5">
-                  <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0">
-                    <Brain className="text-violet-400 w-5 h-5 lg:w-7 lg:h-7" />
+              <AnimatedWidgetShell className="absolute top-[150px] right-4 left-auto z-40 md:top-0 md:left-[5%] md:right-auto md:translate-x-0">
+                <motion.div 
+                  animate={{ y: [0, -20, 0] }}
+                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                  className="pointer-events-auto flex w-[208px] rounded-2xl border-white/10 p-4 shadow-3xl glass lg:rounded-3xl lg:p-6"
+                >
+                  <div className="flex w-full items-center justify-end gap-3 text-right md:w-auto md:justify-start md:text-left lg:gap-5">
+                    <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0">
+                      <Brain className="text-violet-400 w-5 h-5 lg:w-7 lg:h-7" />
+                    </div>
+                    <div className="text-right md:text-left">
+                      <p className="text-[9px] lg:text-[11px] font-black uppercase text-slate-400 tracking-widest">{t.hero.badges.methodology}</p>
+                      <p className="text-sm lg:text-lg font-bold">{t.hero.badges.neuroAcoustics}</p>
+                    </div>
                   </div>
-                  <div className="text-right md:text-left">
-                    <p className="text-[9px] lg:text-[11px] font-black uppercase text-slate-400 tracking-widest">{t.hero.badges.methodology}</p>
-                    <p className="text-sm lg:text-lg font-bold">{t.hero.badges.neuroAcoustics}</p>
-                  </div>
-                </div>
-              </motion.div>
+                </motion.div>
+              </AnimatedWidgetShell>
 
               {/* Sleep Quality Badge */}
-              <motion.div 
-                animate={{ y: [0, 30, 0] }}
-                transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                className="absolute top-[25%] right-[5%] left-auto z-40 hidden rounded-2xl border-white/10 p-4 shadow-3xl glass pointer-events-auto md:flex md:translate-x-0 lg:rounded-3xl lg:p-6"
-              >
-                <div className="flex items-center gap-3 lg:gap-5">
-                  <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                    <CheckCircle2 className="text-emerald-400 w-5 h-5 lg:w-7 lg:h-7" />
+              <AnimatedWidgetShell className="absolute top-[25%] right-[5%] left-auto z-40 hidden md:block md:translate-x-0">
+                <motion.div 
+                  animate={{ y: [0, 30, 0] }}
+                  transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                  className="pointer-events-auto flex rounded-2xl border-white/10 p-4 shadow-3xl glass lg:rounded-3xl lg:p-6"
+                >
+                  <div className="flex items-center gap-3 lg:gap-5">
+                    <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle2 className="text-emerald-400 w-5 h-5 lg:w-7 lg:h-7" />
+                    </div>
+                    <div>
+                      <p className="text-[9px] lg:text-[11px] font-black uppercase text-slate-400 tracking-widest">{t.hero.badges.sleepQuality}</p>
+                      <p className="text-sm lg:text-lg font-bold">{t.hero.badges.improvement}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-[9px] lg:text-[11px] font-black uppercase text-slate-400 tracking-widest">{t.hero.badges.sleepQuality}</p>
-                    <p className="text-sm lg:text-lg font-bold">{t.hero.badges.improvement}</p>
-                  </div>
-                </div>
-              </motion.div>
+                </motion.div>
+              </AnimatedWidgetShell>
 
               {/* Community Badge - NEW */}
-              <motion.div 
-                animate={{ y: [0, -15, 0] }}
-                transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-                className="absolute top-[300px] right-4 left-auto z-40 flex w-[208px] rounded-2xl border-white/10 p-4 shadow-3xl glass pointer-events-auto md:top-1/2 md:left-[2%] md:right-auto md:w-auto md:-translate-y-1/2 md:translate-x-0 lg:rounded-3xl lg:p-6"
-              >
-                <div className="flex w-full items-center justify-end gap-3 text-right md:w-auto md:justify-start md:text-left lg:gap-5">
-                  <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                    <Users className="text-blue-400 w-5 h-5 lg:w-7 lg:h-7" />
+              <AnimatedWidgetShell className="absolute top-[300px] right-4 left-auto z-40 md:top-1/2 md:left-[2%] md:right-auto md:-translate-y-1/2 md:translate-x-0">
+                <motion.div 
+                  animate={{ y: [0, -15, 0] }}
+                  transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+                  className="pointer-events-auto flex w-[208px] rounded-2xl border-white/10 p-4 shadow-3xl glass lg:rounded-3xl lg:p-6"
+                >
+                  <div className="flex w-full items-center justify-end gap-3 text-right md:w-auto md:justify-start md:text-left lg:gap-5">
+                    <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                      <Users className="text-blue-400 w-5 h-5 lg:w-7 lg:h-7" />
+                    </div>
+                    <div className="text-right md:text-left">
+                      <p className="text-[9px] lg:text-[11px] font-black uppercase text-slate-400 tracking-widest">{t.hero.badges.community}</p>
+                      <p className="text-sm lg:text-lg font-bold">{t.hero.badges.parents}</p>
+                    </div>
                   </div>
-                  <div className="text-right md:text-left">
-                    <p className="text-[9px] lg:text-[11px] font-black uppercase text-slate-400 tracking-widest">{t.hero.badges.community}</p>
-                    <p className="text-sm lg:text-lg font-bold">{t.hero.badges.parents}</p>
-                  </div>
-                </div>
-              </motion.div>
+                </motion.div>
+              </AnimatedWidgetShell>
 
               {/* Parent Review Bubble */}
+              <AnimatedWidgetShell className="absolute bottom-0 left-[5%] z-50 hidden md:block md:translate-x-0" strength={0.85}>
               <motion.div 
                 animate={{ y: [0, -15, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-                className="absolute bottom-0 left-[5%] z-50 hidden max-w-[180px] flex-col items-start rounded-2xl border-white/10 p-4 shadow-2xl glass pointer-events-auto md:flex md:translate-x-0"
+                className="pointer-events-auto flex max-w-[180px] flex-col items-start rounded-2xl border-white/10 p-4 shadow-2xl glass"
               >
                 <div className="flex gap-1 mb-2">
                   {[1, 2, 3, 4, 5].map(i => <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />)}
@@ -294,13 +372,15 @@ export default function App() {
                 <p className="text-[11px] font-medium text-slate-300 italic text-center md:text-left">{t.hero.review.text}</p>
                 <p className="text-[9px] font-bold text-violet-400 mt-1 uppercase tracking-widest">— {t.hero.review.author}</p>
               </motion.div>
+              </AnimatedWidgetShell>
 
               {/* iOS Style Now Playing Widget */}
+              <AnimatedWidgetShell className="absolute top-0 right-4 z-50 md:top-auto md:right-[5%] md:bottom-[25%] md:left-auto md:translate-x-0">
               <motion.div 
                 initial={{ opacity: 1, x: 0 }}
                 animate={{ y: [0, 15, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                className="absolute top-0 right-4 z-50 flex w-[240px] max-w-[78vw] flex-col rounded-[2rem] border-white/10 p-4 shadow-4xl glass pointer-events-auto md:top-auto md:right-[5%] md:bottom-[25%] md:left-auto md:w-72 md:max-w-none md:translate-x-0 lg:w-80 lg:rounded-[2.5rem] lg:p-5"
+                className="pointer-events-auto flex w-[240px] max-w-[78vw] flex-col rounded-[2rem] border-white/10 p-4 shadow-4xl glass md:w-72 md:max-w-none lg:w-80 lg:rounded-[2.5rem] lg:p-5"
               >
                 <div className="flex items-center gap-3 lg:gap-4 mb-3 lg:mb-4">
                   <div className="w-12 h-12 lg:w-16 lg:h-16 rounded-xl lg:rounded-2xl overflow-hidden shadow-lg">
@@ -346,18 +426,21 @@ export default function App() {
                   />
                 </div>
               </motion.div>
+              </AnimatedWidgetShell>
 
               {/* Live Listeners */}
+              <AnimatedWidgetShell className="absolute -top-10 left-1/2 z-[60] hidden -translate-x-1/2 md:block" strength={0.85}>
               <motion.div 
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -top-10 left-1/2 z-[60] hidden -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full border-white/10 px-4 py-2 shadow-2xl glass pointer-events-auto md:flex lg:gap-3 lg:px-6 lg:py-3"
+                className="pointer-events-auto flex items-center gap-2 whitespace-nowrap rounded-full border-white/10 px-4 py-2 shadow-2xl glass lg:gap-3 lg:px-6 lg:py-3"
               >
                 <div className="w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full bg-red-500 animate-pulse" />
                 <p className="text-[9px] lg:text-[10px] font-black uppercase tracking-[0.2em] text-white">
                   <span className="text-red-500">1,240</span> {t.hero.badges.liveListeners}
                 </p>
               </motion.div>
+              </AnimatedWidgetShell>
             </div>
           </motion.div>
         </div>
@@ -438,19 +521,24 @@ export default function App() {
                 transition={{ delay: i * 0.2 }}
                 className="relative group"
               >
-                <div className="text-[120px] font-serif font-black text-white/5 absolute -top-20 -left-10 select-none group-hover:text-violet-500/10 transition-colors">
+                <div className="absolute -top-20 -left-10 hidden select-none font-serif text-[120px] font-black text-white/5 transition-colors group-hover:text-violet-500/10 md:block">
                   {item.num}
                 </div>
                 <div className="relative z-10">
-                  <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-10 group-hover:bg-violet-500/20 group-hover:border-violet-500/30 transition-all relative overflow-hidden">
-                    <item.icon className="w-8 h-8 text-violet-500 relative z-10" />
-                    {i === 0 && (
-                      <motion.div 
-                        animate={{ x: [-100, 100] }}
-                        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-violet-500/20 to-transparent"
-                      />
-                    )}
+                  <div className="mb-8 flex items-center gap-4 md:mb-10">
+                    <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition-all group-hover:border-violet-500/30 group-hover:bg-violet-500/20">
+                      <item.icon className="relative z-10 h-8 w-8 text-violet-500" />
+                      {i === 0 && (
+                        <motion.div 
+                          animate={{ x: [-100, 100] }}
+                          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-violet-500/20 to-transparent"
+                        />
+                      )}
+                    </div>
+                    <div className="select-none font-serif text-5xl font-black leading-none text-white/8 md:hidden">
+                      {item.num}
+                    </div>
                   </div>
                   <h4 className="text-3xl font-bold mb-6 tracking-tight">{item.title}</h4>
                   <p className="text-lg text-slate-400 leading-relaxed">{item.text}</p>
@@ -476,6 +564,7 @@ export default function App() {
           {/* Repositioned Widgets - Bottom Center */}
           <div className="mt-48 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
             {/* Brain Sync Badge */}
+            <AnimatedWidgetShell strength={0.85}>
             <motion.div 
               animate={{ y: [0, -15, 0], rotate: [0, 5, 0] }}
               transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
@@ -486,8 +575,10 @@ export default function App() {
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t.psychology.brainSync}</p>
               </div>
             </motion.div>
+            </AnimatedWidgetShell>
 
             {/* Clinical Study Badge */}
+            <AnimatedWidgetShell strength={0.9}>
             <motion.div 
               animate={{ y: [0, 15, 0] }}
               transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
@@ -503,6 +594,7 @@ export default function App() {
                 </div>
               </div>
             </motion.div>
+            </AnimatedWidgetShell>
           </div>
         </div>
       </section>
@@ -513,10 +605,11 @@ export default function App() {
       <section className="py-40 px-6 bg-[#050505] relative overflow-hidden">
         <div className="max-w-7xl mx-auto relative">
           {/* Floating Element in Ritual - Repositioned for better visibility */}
+          <AnimatedWidgetShell className="absolute -top-20 left-1/2 z-50 -translate-x-1/2 md:-left-10 md:top-0 md:translate-x-0">
           <motion.div 
             animate={{ y: [0, 20, 0], rotate: [-5, 5, -5] }}
             transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -top-20 left-1/2 -translate-x-1/2 md:-left-10 md:top-0 md:translate-x-0 glass p-6 rounded-full border-white/10 shadow-4xl z-50 flex flex-col items-center gap-2"
+            className="glass p-6 rounded-full border-white/10 shadow-4xl flex flex-col items-center gap-2"
           >
             <div className="flex flex-col items-center gap-2">
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-amber-500/20 flex items-center justify-center">
@@ -525,6 +618,7 @@ export default function App() {
               <p className="text-[9px] font-black uppercase tracking-widest text-amber-400">{t.ritual.autoOff}</p>
             </div>
           </motion.div>
+          </AnimatedWidgetShell>
 
           <div className="text-center mb-24">
             <h2 className="text-[11px] font-black uppercase tracking-[0.5em] text-violet-500 mb-8">{t.ritual.title}</h2>
@@ -538,8 +632,11 @@ export default function App() {
               { step: '03', title: t.ritual.step3.title, text: t.ritual.step3.text, icon: Heart }
             ].map((item, i) => (
               <div key={i} className="glass p-10 rounded-[3rem] border-white/5 relative group hover:bg-white/5 transition-all">
-                <div className="text-6xl font-serif font-black text-white/5 absolute top-10 right-10">{item.step}</div>
-                <item.icon className="w-12 h-12 text-violet-500 mb-8 group-hover:scale-110 transition-transform" />
+                <div className="absolute top-10 right-10 hidden font-serif text-6xl font-black text-white/5 md:block">{item.step}</div>
+                <div className="mb-8 flex items-center gap-4">
+                  <item.icon className="h-12 w-12 text-violet-500 transition-transform group-hover:scale-110" />
+                  <div className="font-serif text-4xl font-black leading-none text-white/8 md:hidden">{item.step}</div>
+                </div>
                 <h4 className="text-3xl font-bold mb-4">{item.title}</h4>
                 <p className="text-slate-400 text-lg">{item.text}</p>
               </div>
@@ -561,7 +658,9 @@ export default function App() {
               </p>
                 <div className="space-y-8">
                 {effects.map((effect) => {
-                  const isActive = activeEffects.includes(effect.id);
+                  const level = landingExperience.effectLevels[effect.id] ?? 0;
+                  const percent = mixerLevelToPercent(level);
+                  const isActive = percent > 0;
                   return (
                     <div key={effect.id} className="space-y-3 group">
                       <div className="flex justify-between items-center">
@@ -570,19 +669,29 @@ export default function App() {
                           <effect.icon className={`w-5 h-5 transition-colors duration-500 ${isActive ? effect.color : 'text-slate-600'}`} />
                           <span className={`text-sm font-bold uppercase tracking-widest transition-colors duration-500 ${isActive ? 'text-white' : 'text-slate-500'}`}>{effect.label[lang]}</span>
                         </div>
-                        <span className="text-xs font-mono text-slate-500">{isActive ? '85%' : '0%'}</span>
+                        <span className="text-xs font-mono text-slate-500">{percent}%</span>
                       </div>
-                      <div 
-                        onClick={() => toggleEffect(effect.id)}
-                        className="h-3 w-full bg-white/5 rounded-full cursor-pointer relative overflow-hidden border border-white/5 p-0.5"
-                      >
-                        <motion.div 
+                      <div className="relative h-4">
+                        <div className="pointer-events-none absolute inset-x-0 top-1/2 h-3 -translate-y-1/2 rounded-full border border-white/5 bg-white/5" />
+                        <motion.div
                           initial={false}
-                          animate={{ 
-                            width: isActive ? '85%' : '0%',
+                          animate={{
+                            width: `${percent}%`,
                             backgroundColor: isActive ? '#8b5cf6' : '#1e1b4b'
                           }}
-                          className="h-full rounded-full shadow-[0_0_20px_rgba(139,92,246,0.3)]"
+                          className="pointer-events-none absolute left-0 top-1/2 h-3 -translate-y-1/2 rounded-full shadow-[0_0_20px_rgba(139,92,246,0.3)]"
+                        />
+                        <input
+                          type="range"
+                          min={0}
+                          max={100}
+                          step={1}
+                          value={percent}
+                          onChange={(event) =>
+                            landingExperience.setEffectLevel(effect.id, mixerPercentToLevel(Number(event.target.value)))
+                          }
+                          className="landing-mixer-slider relative z-10 h-4 w-full cursor-pointer"
+                          aria-label={effect.label[lang]}
                         />
                       </div>
                     </div>
@@ -600,14 +709,16 @@ export default function App() {
               />
               
               {/* New Floating Element: Spatial Audio */}
+              <AnimatedWidgetShell className="absolute -top-20 left-1/2 z-50 -translate-x-1/2" strength={0.85}>
               <motion.div 
                 animate={{ y: [0, -20, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -top-20 left-1/2 -translate-x-1/2 glass px-6 py-3 rounded-2xl border-white/10 shadow-3xl z-50 flex items-center gap-3"
+                className="glass flex cursor-pointer items-center gap-3 rounded-2xl border-white/10 px-6 py-3 shadow-3xl"
               >
                 <Volume2 className="w-4 h-4 text-violet-400" />
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white">{t.effects.spatialAudio}</p>
               </motion.div>
+              </AnimatedWidgetShell>
 
               <div className="aspect-square rounded-[3rem] glass border-white/5 p-12 flex items-center justify-center relative overflow-hidden z-10">
                 <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-transparent" />
@@ -768,19 +879,22 @@ export default function App() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
             </div>
             
-            <div className="absolute -bottom-10 -right-10 glass p-10 rounded-[3rem] border-white/20 shadow-4xl max-w-[280px] rotate-[5deg] z-50">
+            <AnimatedWidgetShell className="absolute -bottom-10 -right-10 z-50" strength={0.9}>
+            <div className="glass p-10 rounded-[3rem] border-white/20 shadow-4xl max-w-[280px] rotate-[5deg]">
               <div className="flex gap-2 mb-4">
                 {[1, 2, 3, 4, 5].map(i => <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />)}
               </div>
               <p className="text-lg font-serif italic text-slate-800 mb-4">{t.dedication.quote}</p>
               <p className="text-xs font-black uppercase tracking-widest text-violet-600">— {t.dedication.author}</p>
             </div>
+            </AnimatedWidgetShell>
 
             {/* New Floating Element: Pediatrician Verified */}
+            <AnimatedWidgetShell className="absolute -top-10 -left-10 z-50 hidden md:block" strength={0.9}>
             <motion.div 
               animate={{ y: [0, -30, 0], rotate: [0, -5, 0] }}
               transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -top-10 -left-10 glass p-8 rounded-[2.5rem] border-white/20 shadow-4xl z-50 hidden md:block"
+              className="glass p-8 rounded-[2.5rem] border-white/20 shadow-4xl"
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
@@ -792,6 +906,7 @@ export default function App() {
                 </div>
               </div>
             </motion.div>
+            </AnimatedWidgetShell>
           </motion.div>
         </div>
       </section>
