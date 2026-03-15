@@ -263,7 +263,7 @@ function resolveStoryMusicFile(raw: Record<string, unknown>) {
   const directSource =
     raw.music_file ??
     raw.music_url ??
-    raw.music_uri;
+    raw.music_uri; 
 
   if (typeof directSource === 'string' && directSource) {
     return directSource;
