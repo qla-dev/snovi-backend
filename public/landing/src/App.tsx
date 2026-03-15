@@ -30,6 +30,11 @@ import {
 } from 'lucide-react';
 import { theme } from './theme';
 import { translations, Language } from './translations';
+import {
+  HeroDeviceShowcase,
+  LandingLibrarySection,
+  useLandingExperience,
+} from './components/LandingExperience';
 
 const stories = [
   { id: 1, title: { bs: 'Ružno pače', en: 'The Ugly Duckling' }, duration: '08:30', status: 'published', image: 'https://picsum.photos/seed/duckling/600/800' },
@@ -53,6 +58,7 @@ export default function App() {
   const [activeEffects, setActiveEffects] = useState<string[]>([]);
   const [scrolled, setScrolled] = useState(false);
   const t = translations[lang];
+  const landingExperience = useLandingExperience();
 
   const { scrollYProgress } = useScroll();
   const y1 = useTransform(scrollYProgress, [0, 1], [0, -200]);
@@ -74,6 +80,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen font-sans selection:bg-violet-500/30 bg-[#050505] text-white">
+      <audio ref={landingExperience.setAudioRef} preload="metadata" className="hidden" />
       {/* Navigation */}
       <nav className={`fixed top-0 w-full z-[100] transition-all duration-500 px-6 py-4 flex justify-between items-center ${scrolled ? 'glass border-b border-white/5 py-3' : 'bg-transparent'}`}>
         <div className="flex items-center gap-3">
@@ -212,19 +219,7 @@ export default function App() {
             transition={{ duration: 1.5, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
             className="relative max-w-6xl mx-auto mt-20"
           >
-            <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-20 md:gap-0">
-              {/* iPhone Frame */}
-              <div className="relative rounded-[3rem] md:rounded-[3.5rem] border-[10px] md:border-[12px] border-[#1a1a1a] bg-[#0a0a0a] shadow-[0_80px_150px_-30px_rgba(0,0,0,0.8)] overflow-hidden w-[240px] h-[500px] md:w-[280px] md:h-[580px] -translate-x-[40%] rotate-[-3deg] md:rotate-[-5deg] md:translate-x-[-40px] z-20">
-                <img src="https://picsum.photos/seed/app1/600/1200" className="w-full h-full object-cover opacity-60" alt="App UI" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-              </div>
-
-              {/* Tablet Frame */}
-              <div className="relative rounded-[2.5rem] md:rounded-[3rem] border-[12px] md:border-[14px] border-[#1a1a1a] bg-[#0a0a0a] shadow-[0_80px_150px_-30px_rgba(0,0,0,0.8)] overflow-hidden w-[320px] md:w-full md:max-w-[550px] aspect-[4/3] translate-x-[30%] rotate-[3deg] md:rotate-[3deg] md:translate-x-[40px] md:-translate-y-10 z-10 scale-110 md:scale-100">
-                <img src="https://picsum.photos/seed/tablet/1200/900" className="w-full h-full object-cover opacity-60" alt="Tablet UI" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-              </div>
-            </div>
+            <HeroDeviceShowcase lang={lang} experience={landingExperience} />
             
             {/* Floating Badges - Repositioned and Responsive */}
             <div className="absolute inset-0 pointer-events-none z-30">
@@ -609,7 +604,19 @@ export default function App() {
       <div className="max-w-7xl mx-auto h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
       {/* Library Section - Editorial Style */}
-      <section id="stories" className="py-40 px-6">
+      <LandingLibrarySection
+        lang={lang}
+        experience={landingExperience}
+        badgeLabel={t.nav.stories}
+        title={t.stories.title}
+        safeLabel={t.stories.safeForKids}
+        viewAllLabel={t.stories.viewAll}
+        popularLabel={t.stories.popular}
+        publishedLabel={t.stories.published}
+        comingSoonLabel={t.stories.comingSoon}
+      />
+      {false && (
+      <section>
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-end gap-10 mb-24 relative">
             <div className="max-w-2xl">
@@ -680,6 +687,7 @@ export default function App() {
           </div>
         </div>
       </section>
+      )}
 
       <div className="max-w-7xl mx-auto h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-20" />
 
