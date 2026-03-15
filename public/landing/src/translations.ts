@@ -5,9 +5,11 @@ export const translations = {
     nav: {
       features: 'Mogućnosti',
       samples: 'Poslušaj',
+      preview: 'Primjer',
       effects: 'Ambijenti',
       stories: 'Biblioteka',
       psychology: 'Metodologija',
+      waitlist: 'Waitlist',
     },
     hero: {
       title: 'Uspavajte maštu. Probudite mir.',
@@ -20,7 +22,7 @@ export const translations = {
         sleepQuality: 'Kvalitet sna',
         improvement: '+42% Poboljšanje',
         liveListeners: 'Djece trenutno spava',
-        nowPlaying: 'Trenutno svira',
+        nowPlaying: 'Trenutno pušteno',
         community: 'Zajednica',
         parents: '50k+ Roditelja',
       },
@@ -123,9 +125,11 @@ export const translations = {
     nav: {
       features: 'Features',
       samples: 'Listen',
+      preview: 'Preview',
       effects: 'Ambiances',
       stories: 'Library',
       psychology: 'Methodology',
+      waitlist: 'Waitlist',
     },
     hero: {
       title: 'Lull the Imagination. Awaken Peace.',

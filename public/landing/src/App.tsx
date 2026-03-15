@@ -8,6 +8,7 @@ import { motion, AnimatePresence, useScroll, useTransform } from 'motion/react';
 import { 
   Play, 
   Pause, 
+  LoaderCircle,
   CloudRain, 
   Trees, 
   Waves, 
@@ -31,10 +32,12 @@ import {
 import { theme } from './theme';
 import { translations, Language } from './translations';
 import {
+  FixedMiniPlayerBar,
   HeroDeviceShowcase,
   LandingLibrarySection,
   useLandingExperience,
 } from './components/LandingExperience';
+import { HeroLottieBackground } from './components/HeroLottieBackground';
 
 const stories = [
   { id: 1, title: { bs: 'Ružno pače', en: 'The Ugly Duckling' }, duration: '08:30', status: 'published', image: 'https://picsum.photos/seed/duckling/600/800' },
@@ -79,7 +82,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen font-sans selection:bg-violet-500/30 bg-[#050505] text-white">
+    <div className="min-h-screen bg-[#050505] pb-28 font-sans text-white selection:bg-violet-500/30 md:pb-36">
       <audio ref={landingExperience.setAudioRef} preload="metadata" className="hidden" />
       {/* Navigation */}
       <nav className={`fixed top-0 w-full z-[100] transition-all duration-500 px-6 py-4 flex justify-between items-center ${scrolled ? 'glass border-b border-white/5 py-3' : 'bg-transparent'}`}>
@@ -94,9 +97,11 @@ export default function App() {
         </div>
         
         <div className="hidden lg:flex items-center gap-10 text-[13px] uppercase tracking-widest font-bold text-slate-400">
+          <a href="#preview" className="hover:text-white transition-colors">{t.nav.preview}</a>
           <a href="#psychology" className="hover:text-white transition-colors">{t.nav.psychology}</a>
           <a href="#effects" className="hover:text-white transition-colors">{t.nav.effects}</a>
           <a href="#stories" className="hover:text-white transition-colors">{t.nav.stories}</a>
+          <a href="#waitlist" className="hover:text-white transition-colors">{t.nav.waitlist}</a>
         </div>
 
         <div className="flex items-center gap-4">
@@ -117,9 +122,11 @@ export default function App() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center pt-32 pb-20 overflow-hidden">
+      <section className="relative isolate min-h-screen flex items-center overflow-hidden pt-32 pb-20">
         {/* Atmospheric Backgrounds */}
-        <div className="absolute top-0 left-0 w-full h-full -z-10">
+        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+          <HeroLottieBackground className="hero-lottie-bg absolute inset-0 opacity-90" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#041221] via-[#050505]/45 to-[#050505]" />
           <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-violet-600/10 blur-[180px] rounded-full" />
           <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] bg-indigo-600/10 blur-[180px] rounded-full" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none" />
@@ -150,7 +157,7 @@ export default function App() {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 w-full">
+        <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
           <div className="flex flex-col items-center text-center mb-20">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -214,10 +221,11 @@ export default function App() {
 
           {/* Device Mockups - Responsive Grid */}
           <motion.div 
+            id="preview"
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.5, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="relative max-w-6xl mx-auto mt-20"
+            className="relative max-w-6xl mx-auto mt-20 scroll-mt-32"
           >
             <HeroDeviceShowcase lang={lang} experience={landingExperience} />
             
@@ -227,13 +235,13 @@ export default function App() {
               <motion.div 
                 animate={{ y: [0, -20, 0] }}
                 transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute top-[120px] left-[5%] md:top-0 md:left-[5%] md:translate-x-0 glass p-4 lg:p-6 rounded-2xl lg:rounded-3xl border-white/10 shadow-3xl z-40 pointer-events-auto flex"
+                className="absolute top-[150px] right-4 left-auto z-40 flex w-[208px] rounded-2xl border-white/10 p-4 shadow-3xl glass pointer-events-auto md:top-0 md:left-[5%] md:right-auto md:w-auto md:translate-x-0 lg:rounded-3xl lg:p-6"
               >
-                <div className="flex items-center gap-3 lg:gap-5">
+                <div className="flex w-full items-center justify-end gap-3 text-right md:w-auto md:justify-start md:text-left lg:gap-5">
                   <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0">
                     <Brain className="text-violet-400 w-5 h-5 lg:w-7 lg:h-7" />
                   </div>
-                  <div>
+                  <div className="text-right md:text-left">
                     <p className="text-[9px] lg:text-[11px] font-black uppercase text-slate-400 tracking-widest">{t.hero.badges.methodology}</p>
                     <p className="text-sm lg:text-lg font-bold">{t.hero.badges.neuroAcoustics}</p>
                   </div>
@@ -244,7 +252,7 @@ export default function App() {
               <motion.div 
                 animate={{ y: [0, 30, 0] }}
                 transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                className="absolute top-[400px] right-[5%] md:top-[25%] md:right-[5%] md:left-auto md:translate-x-0 glass p-4 lg:p-6 rounded-2xl lg:rounded-3xl border-white/10 shadow-3xl z-40 pointer-events-auto flex"
+                className="absolute top-[25%] right-[5%] left-auto z-40 hidden rounded-2xl border-white/10 p-4 shadow-3xl glass pointer-events-auto md:flex md:translate-x-0 lg:rounded-3xl lg:p-6"
               >
                 <div className="flex items-center gap-3 lg:gap-5">
                   <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
@@ -261,13 +269,13 @@ export default function App() {
               <motion.div 
                 animate={{ y: [0, -15, 0] }}
                 transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-                className="absolute top-[260px] left-[5%] md:top-1/2 md:-translate-y-1/2 md:left-[2%] md:translate-x-0 glass p-4 lg:p-6 rounded-2xl lg:rounded-3xl border-white/10 shadow-3xl z-40 pointer-events-auto flex"
+                className="absolute top-[300px] right-4 left-auto z-40 flex w-[208px] rounded-2xl border-white/10 p-4 shadow-3xl glass pointer-events-auto md:top-1/2 md:left-[2%] md:right-auto md:w-auto md:-translate-y-1/2 md:translate-x-0 lg:rounded-3xl lg:p-6"
               >
-                <div className="flex items-center gap-3 lg:gap-5">
+                <div className="flex w-full items-center justify-end gap-3 text-right md:w-auto md:justify-start md:text-left lg:gap-5">
                   <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
                     <Users className="text-blue-400 w-5 h-5 lg:w-7 lg:h-7" />
                   </div>
-                  <div>
+                  <div className="text-right md:text-left">
                     <p className="text-[9px] lg:text-[11px] font-black uppercase text-slate-400 tracking-widest">{t.hero.badges.community}</p>
                     <p className="text-sm lg:text-lg font-bold">{t.hero.badges.parents}</p>
                   </div>
@@ -278,7 +286,7 @@ export default function App() {
               <motion.div 
                 animate={{ y: [0, -15, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-                className="absolute top-[540px] left-[5%] md:top-auto md:bottom-0 md:left-[5%] md:translate-x-0 glass p-4 rounded-2xl border-white/10 shadow-2xl z-50 pointer-events-auto max-w-[180px] flex flex-col items-center md:items-start"
+                className="absolute bottom-0 left-[5%] z-50 hidden max-w-[180px] flex-col items-start rounded-2xl border-white/10 p-4 shadow-2xl glass pointer-events-auto md:flex md:translate-x-0"
               >
                 <div className="flex gap-1 mb-2">
                   {[1, 2, 3, 4, 5].map(i => <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />)}
@@ -292,25 +300,48 @@ export default function App() {
                 initial={{ opacity: 1, x: 0 }}
                 animate={{ y: [0, 15, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                className="absolute top-0 right-[5%] md:top-auto md:bottom-[25%] md:right-[5%] md:left-auto md:translate-x-0 w-72 lg:w-80 glass p-4 lg:p-5 rounded-[2rem] lg:rounded-[2.5rem] border-white/10 shadow-4xl z-50 pointer-events-auto flex flex-col"
+                className="absolute top-0 right-4 z-50 flex w-[240px] max-w-[78vw] flex-col rounded-[2rem] border-white/10 p-4 shadow-4xl glass pointer-events-auto md:top-auto md:right-[5%] md:bottom-[25%] md:left-auto md:w-72 md:max-w-none md:translate-x-0 lg:w-80 lg:rounded-[2.5rem] lg:p-5"
               >
                 <div className="flex items-center gap-3 lg:gap-4 mb-3 lg:mb-4">
                   <div className="w-12 h-12 lg:w-16 lg:h-16 rounded-xl lg:rounded-2xl overflow-hidden shadow-lg">
-                    <img src="https://picsum.photos/seed/duckling/200/200" alt="Now Playing" className="w-full h-full object-cover" />
+                    <img
+                      src={landingExperience.selectedStory?.image || 'https://picsum.photos/seed/duckling/200/200'}
+                      alt="Now Playing"
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
                   </div>
                   <div className="flex-1">
                     <p className="text-[9px] lg:text-[10px] font-black uppercase text-violet-400 tracking-widest mb-0.5 lg:mb-1">{t.hero.badges.nowPlaying}</p>
-                    <p className="text-xs lg:text-sm font-bold truncate">{t.hero.nowPlaying.title}</p>
-                    <p className="text-[9px] lg:text-[10px] text-slate-400">04:20 / 08:30</p>
+                    <p className="text-xs lg:text-sm font-bold truncate">
+                      {landingExperience.selectedStory?.title || t.hero.nowPlaying.title}
+                    </p>
+                    <p className="text-[9px] lg:text-[10px] text-slate-400">
+                      {landingExperience.selectedStory?.duration || '08:30'}
+                    </p>
                   </div>
-                  <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-white/10 flex items-center justify-center">
-                    <Pause className="w-3 h-3 lg:w-4 lg:h-4 fill-white" />
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void landingExperience.togglePlayPause()}
+                    disabled={!landingExperience.selectedStory?.sound}
+                    className={`flex w-8 h-8 lg:w-10 lg:h-10 rounded-full items-center justify-center transition ${
+                      landingExperience.isPlaying ? 'bg-white text-black' : 'bg-white/10 text-white'
+                    } disabled:cursor-not-allowed disabled:opacity-40`}
+                    aria-label={landingExperience.isPlaying ? 'Pause story' : 'Play story'}
+                  >
+                    {landingExperience.isAudioLoading ? (
+                      <LoaderCircle className="w-3 h-3 lg:w-4 lg:h-4 animate-spin" />
+                    ) : landingExperience.isPlaying ? (
+                      <Pause className="w-3 h-3 lg:w-4 lg:h-4 fill-current" />
+                    ) : (
+                      <Play className="w-3 h-3 lg:w-4 lg:h-4 fill-current ml-0.5" />
+                    )}
+                  </button>
                 </div>
                 <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
                   <motion.div 
-                    animate={{ width: '50%' }}
-                    transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse' }}
+                    animate={{ width: `${Math.max(0, Math.min(1, landingExperience.progressRatio)) * 100}%` }}
+                    transition={{ duration: 0.25 }}
                     className="h-full bg-violet-500"
                   />
                 </div>
@@ -320,7 +351,7 @@ export default function App() {
               <motion.div 
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -top-10 left-1/2 -translate-x-1/2 glass px-4 lg:px-6 py-2 lg:py-3 rounded-full border-white/10 shadow-2xl z-[60] pointer-events-auto flex items-center gap-2 lg:gap-3 whitespace-nowrap"
+                className="absolute -top-10 left-1/2 z-[60] hidden -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full border-white/10 px-4 py-2 shadow-2xl glass pointer-events-auto md:flex lg:gap-3 lg:px-6 lg:py-3"
               >
                 <div className="w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full bg-red-500 animate-pulse" />
                 <p className="text-[9px] lg:text-[10px] font-black uppercase tracking-[0.2em] text-white">
@@ -335,7 +366,7 @@ export default function App() {
       <div className="max-w-7xl mx-auto h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
       {/* Waitlist Section */}
-      <section id="waitlist" className="py-20 px-6 relative overflow-hidden">
+      <section id="waitlist" className="relative overflow-hidden px-6 py-20 scroll-mt-28">
         <div className="max-w-4xl mx-auto relative z-10">
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
@@ -812,6 +843,7 @@ export default function App() {
           </div>
         </div>
       </footer>
+      <FixedMiniPlayerBar lang={lang} experience={landingExperience} />
     </div>
   );
 }

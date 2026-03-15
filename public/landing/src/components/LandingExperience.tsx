@@ -31,6 +31,25 @@ type Subcategory = {
   categoryId: number | null;
 };
 
+export const AMBIENT_EFFECT_IDS = [
+  'ocean',
+  'rain',
+  'fire',
+  'leaves',
+  'river',
+  'birds',
+  'fan',
+  'snow',
+  'train',
+  'crickets',
+] as const;
+
+export type AmbientEffectId = (typeof AMBIENT_EFFECT_IDS)[number];
+export type MixerLevelId = AmbientEffectId | 'music';
+export type MixerLevels = Record<MixerLevelId, number>;
+
+type StoryEffects = Partial<Record<AmbientEffectId, number>>;
+
 type Story = {
   id: string;
   slug: string;
@@ -47,10 +66,12 @@ type Story = {
   locked: boolean;
   favorite: boolean;
   sound: string | null;
+  musicFile: string | null;
+  effects: StoryEffects;
   publishedAt: string | null;
 };
 
-type MainTabId = number | 'FAV' | 'LIBRARY_ALL';
+type MainTabId = number | 'LIBRARY_ALL';
 type SubTabId = number | 'ALL';
 type BottomTabId = 'home' | 'library' | 'profile' | 'offer';
 
@@ -78,10 +99,27 @@ type LandingLibrarySectionProps = {
   comingSoonLabel: string;
 };
 
+type FixedMiniPlayerBarProps = {
+  lang: Language;
+  experience: LandingExperienceState;
+};
+
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80&w=1200';
 const ALL_MAIN_TAB_ID = 'LIBRARY_ALL';
 const ALL_SUB_TAB_ID = 'ALL';
-const FAVORITES_TAB_ID = 'FAV';
+const DEFAULT_MUSIC_LEVEL = 2;
+const AMBIENT_EFFECT_FILE_PATHS: Record<AmbientEffectId, string> = {
+  ocean: 'sounds/filter-sounds/ocean.mp3',
+  rain: 'sounds/filter-sounds/storm.mp3',
+  fire: 'sounds/filter-sounds/fire.mp3',
+  leaves: 'sounds/filter-sounds/leaves.mp3',
+  river: 'sounds/filter-sounds/river.mp3',
+  birds: 'sounds/filter-sounds/birds.mp3',
+  fan: 'sounds/filter-sounds/ventilator.mp3',
+  snow: 'sounds/filter-sounds/polar_snow.mp3',
+  train: 'sounds/filter-sounds/train.mp3',
+  crickets: 'sounds/filter-sounds/crickets.mp3',
+};
 
 const BOTTOM_TABS: Array<{
   id: BottomTabId;
@@ -106,7 +144,7 @@ const UI_COPY = {
     deviceLibraryTitle: 'Biblioteka SNOVA',
     deviceLibraryHint: 'Filteri i kartice koriste iste podatke kao frontend.',
     deviceQueue: 'Brzi izbor',
-    nowPlaying: 'TRENUTNO SVIRA',
+    nowPlaying: 'TRENUTNO PUŠTENO',
     selected: 'U PLAYERU',
     previewResults: 'rezultata',
     resetFilters: 'Resetuj filtere',
@@ -114,6 +152,7 @@ const UI_COPY = {
     searchLabel: 'Pretraga',
     filterLabel: 'Filter biblioteke',
     noAudio: 'Bez audio fajla',
+    openLibrary: 'Biblioteka',
   },
   en: {
     all: 'ALL',
@@ -134,6 +173,7 @@ const UI_COPY = {
     searchLabel: 'Search',
     filterLabel: 'Library filter',
     noAudio: 'No audio file',
+    openLibrary: 'Library',
   },
 } as const;
 
@@ -145,9 +185,110 @@ function trimTrailingSlash(value: string) {
   return value.replace(/\/+$/, '');
 }
 
+function clampMixerLevel(value: unknown) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(10, parsed));
+}
+
+function clamp01(value: number) {
+  return Math.max(0, Math.min(1, value));
+}
+
 function toInt(value: unknown) {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function resolvePublicAssetUrl(relativePath: string) {
+  if (typeof document === 'undefined') {
+    return relativePath;
+  }
+
+  return new URL(relativePath, document.baseURI).toString();
+}
+
+function createEmptyMixerLevels(): MixerLevels {
+  return {
+    music: 0,
+    ocean: 0,
+    rain: 0,
+    fire: 0,
+    leaves: 0,
+    river: 0,
+    birds: 0,
+    fan: 0,
+    snow: 0,
+    train: 0,
+    crickets: 0,
+  };
+}
+
+function createStartedMixerFlags(): Record<MixerLevelId, boolean> {
+  return {
+    music: false,
+    ocean: false,
+    rain: false,
+    fire: false,
+    leaves: false,
+    river: false,
+    birds: false,
+    fan: false,
+    snow: false,
+    train: false,
+    crickets: false,
+  };
+}
+
+function normalizeStoryEffects(rawEffects: unknown): StoryEffects {
+  if (!rawEffects || typeof rawEffects !== 'object') {
+    return {};
+  }
+
+  const source = rawEffects as Record<string, unknown>;
+
+  return AMBIENT_EFFECT_IDS.reduce<StoryEffects>((accumulator, effectId) => {
+    const level = clampMixerLevel(source[effectId]);
+    if (level > 0) {
+      accumulator[effectId] = level;
+    }
+    return accumulator;
+  }, {});
+}
+
+function resolveStoryMusicFile(raw: Record<string, unknown>) {
+  const directSource =
+    raw.music_file ??
+    raw.music_url ??
+    raw.music_uri;
+
+  if (typeof directSource === 'string' && directSource) {
+    return directSource;
+  }
+
+  if (!raw.music || typeof raw.music !== 'object') {
+    return null;
+  }
+
+  const music = raw.music as Record<string, unknown>;
+  const nestedSource = music.file ?? music.uri ?? music.url;
+
+  return typeof nestedSource === 'string' && nestedSource ? nestedSource : null;
+}
+
+function defaultsForStory(story: Story | null): MixerLevels {
+  const defaults = createEmptyMixerLevels();
+
+  AMBIENT_EFFECT_IDS.forEach((effectId) => {
+    defaults[effectId] = clampMixerLevel(story?.effects?.[effectId] ?? 0);
+  });
+
+  defaults.music = story?.musicFile ? DEFAULT_MUSIC_LEVEL : 0;
+
+  return defaults;
 }
 
 function parseDurationSeconds(value: unknown) {
@@ -193,6 +334,8 @@ function normalizeStory(raw: Record<string, unknown>): Story {
     locked: Boolean(raw.locked),
     favorite: Boolean(raw.favorite),
     sound: typeof raw.sound === 'string' && raw.sound ? raw.sound : null,
+    musicFile: resolveStoryMusicFile(raw),
+    effects: normalizeStoryEffects(raw.effects),
     publishedAt: typeof raw.published_at === 'string' ? raw.published_at : null,
   };
 }
@@ -326,7 +469,57 @@ export function useLandingExperience() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [progressRatio, setProgressRatio] = useState(0);
+  const [effectLevels, setEffectLevelsState] = useState<MixerLevels>(() => createEmptyMixerLevels());
   const pendingResumeRef = useRef(false);
+  const musicAudioRef = useRef<HTMLAudioElement | null>(null);
+  const effectAudioElementsRef = useRef<Partial<Record<AmbientEffectId, HTMLAudioElement>>>({});
+  const startedMixerRef = useRef<Record<MixerLevelId, boolean>>(createStartedMixerFlags());
+  const loadedMusicSourceRef = useRef<string | null>(null);
+  const selectedStoryRef = useRef<Story | null>(null);
+  const effectLevelsRef = useRef<MixerLevels>(createEmptyMixerLevels());
+
+  useEffect(() => {
+    if (typeof Audio === 'undefined') {
+      return;
+    }
+
+    const musicAudio = new Audio();
+    musicAudio.preload = 'auto';
+    musicAudio.loop = true;
+    musicAudio.volume = 0;
+    musicAudioRef.current = musicAudio;
+
+    const effectAudios: Partial<Record<AmbientEffectId, HTMLAudioElement>> = {};
+    AMBIENT_EFFECT_IDS.forEach((effectId) => {
+      const effectAudio = new Audio(resolvePublicAssetUrl(AMBIENT_EFFECT_FILE_PATHS[effectId]));
+      effectAudio.preload = 'auto';
+      effectAudio.loop = true;
+      effectAudio.volume = 0;
+      effectAudios[effectId] = effectAudio;
+    });
+    effectAudioElementsRef.current = effectAudios;
+
+    return () => {
+      AMBIENT_EFFECT_IDS.forEach((effectId) => {
+        const effectAudio = effectAudios[effectId];
+        if (!effectAudio) {
+          return;
+        }
+
+        effectAudio.pause();
+        effectAudio.removeAttribute('src');
+        effectAudio.load();
+      });
+
+      musicAudio.pause();
+      musicAudio.removeAttribute('src');
+      musicAudio.load();
+      musicAudioRef.current = null;
+      effectAudioElementsRef.current = {};
+      startedMixerRef.current = createStartedMixerFlags();
+      loadedMusicSourceRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -389,9 +582,7 @@ export function useLandingExperience() {
 
     let visibleStories = stories;
 
-    if (mainTab === FAVORITES_TAB_ID) {
-      visibleStories = visibleStories.filter((story) => story.favorite);
-    } else if (mainTab !== ALL_MAIN_TAB_ID) {
+    if (mainTab !== ALL_MAIN_TAB_ID) {
       visibleStories = visibleStories.filter((story) => story.categoryId === mainTab);
     }
 
@@ -418,6 +609,150 @@ export function useLandingExperience() {
     return stories.find((story) => story.id === selectedStoryId) ?? null;
   }, [selectedStoryId, stories]);
 
+  const pauseAuxiliaryPlayback = useCallback(() => {
+    const musicAudio = musicAudioRef.current;
+    if (musicAudio) {
+      musicAudio.pause();
+      musicAudio.volume = 0;
+      try {
+        musicAudio.currentTime = 0;
+      } catch {
+        // Ignore currentTime assignment failures on not-yet-loaded media.
+      }
+    }
+
+    startedMixerRef.current.music = false;
+
+    AMBIENT_EFFECT_IDS.forEach((effectId) => {
+      const effectAudio = effectAudioElementsRef.current[effectId];
+      if (!effectAudio) {
+        return;
+      }
+
+      effectAudio.pause();
+      effectAudio.volume = 0;
+      try {
+        effectAudio.currentTime = 0;
+      } catch {
+        // Ignore currentTime assignment failures on not-yet-loaded media.
+      }
+      startedMixerRef.current[effectId] = false;
+    });
+  }, []);
+
+  const prepareMusicAudio = useCallback((story: Story | null) => {
+    const musicAudio = musicAudioRef.current;
+    if (!musicAudio) {
+      return false;
+    }
+
+    const nextSource = story?.musicFile ?? null;
+    if (!nextSource) {
+      loadedMusicSourceRef.current = null;
+      musicAudio.pause();
+      musicAudio.volume = 0;
+      musicAudio.removeAttribute('src');
+      musicAudio.load();
+      startedMixerRef.current.music = false;
+      return false;
+    }
+
+    if (loadedMusicSourceRef.current !== nextSource) {
+      loadedMusicSourceRef.current = nextSource;
+      startedMixerRef.current.music = false;
+      musicAudio.pause();
+      musicAudio.src = nextSource;
+      musicAudio.load();
+    }
+
+    musicAudio.loop = true;
+    return true;
+  }, []);
+
+  const syncAuxiliaryPlayback = useCallback(
+    async (playing: boolean, story = selectedStoryRef.current, levels = effectLevelsRef.current) => {
+      if (!playing || !story?.sound) {
+        prepareMusicAudio(story);
+        pauseAuxiliaryPlayback();
+        return;
+      }
+
+      await Promise.all(
+        AMBIENT_EFFECT_IDS.map(async (effectId) => {
+          const effectAudio = effectAudioElementsRef.current[effectId];
+          if (!effectAudio) {
+            return;
+          }
+
+          const level = clampMixerLevel(levels[effectId]);
+          const volume = clamp01(level / 10);
+          effectAudio.volume = volume;
+
+          if (volume > 0) {
+            if (!startedMixerRef.current[effectId]) {
+              try {
+                effectAudio.currentTime = 0;
+              } catch {
+                // Ignore currentTime assignment failures on not-yet-loaded media.
+              }
+              startedMixerRef.current[effectId] = true;
+            }
+
+            try {
+              await effectAudio.play();
+            } catch {
+              // Ignore autoplay/load failures and retry on the next playback sync.
+            }
+            return;
+          }
+
+          effectAudio.pause();
+          try {
+            effectAudio.currentTime = 0;
+          } catch {
+            // Ignore currentTime assignment failures on not-yet-loaded media.
+          }
+          startedMixerRef.current[effectId] = false;
+        }),
+      );
+
+      const musicAudio = musicAudioRef.current;
+      const hasMusic = prepareMusicAudio(story);
+      const musicLevel = clampMixerLevel(levels.music);
+
+      if (!musicAudio || !hasMusic || musicLevel <= 0) {
+        if (musicAudio) {
+          musicAudio.pause();
+          musicAudio.volume = 0;
+          try {
+            musicAudio.currentTime = 0;
+          } catch {
+            // Ignore currentTime assignment failures on not-yet-loaded media.
+          }
+        }
+        startedMixerRef.current.music = false;
+        return;
+      }
+
+      musicAudio.volume = clamp01(musicLevel / 10);
+      if (!startedMixerRef.current.music) {
+        try {
+          musicAudio.currentTime = 0;
+        } catch {
+          // Ignore currentTime assignment failures on not-yet-loaded media.
+        }
+        startedMixerRef.current.music = true;
+      }
+
+      try {
+        await musicAudio.play();
+      } catch {
+        // Ignore autoplay/load failures and retry on the next playback sync.
+      }
+    },
+    [pauseAuxiliaryPlayback, prepareMusicAudio],
+  );
+
   useEffect(() => {
     if (!stories.length) {
       return;
@@ -430,6 +765,23 @@ export function useLandingExperience() {
     const initialStory = stories.find((story) => story.sound) ?? stories[0];
     setSelectedStoryId(initialStory.id);
   }, [selectedStoryId, stories]);
+
+  useEffect(() => {
+    selectedStoryRef.current = selectedStory;
+  }, [selectedStory]);
+
+  useEffect(() => {
+    if (audioElement) {
+      audioElement.pause();
+    }
+
+    pauseAuxiliaryPlayback();
+    prepareMusicAudio(selectedStory);
+
+    const nextLevels = defaultsForStory(selectedStory);
+    effectLevelsRef.current = nextLevels;
+    setEffectLevelsState(nextLevels);
+  }, [audioElement, pauseAuxiliaryPlayback, prepareMusicAudio, selectedStory]);
 
   useEffect(() => {
     if (!audioElement) {
@@ -448,16 +800,22 @@ export function useLandingExperience() {
     const handlePlaying = () => {
       setIsAudioLoading(false);
       setIsPlaying(true);
+      void syncAuxiliaryPlayback(true);
     };
-    const handlePause = () => setIsPlaying(false);
+    const handlePause = () => {
+      setIsPlaying(false);
+      pauseAuxiliaryPlayback();
+    };
     const handleWaiting = () => setIsAudioLoading(true);
     const handleEnded = () => {
       setIsPlaying(false);
       setProgressRatio(0);
+      pauseAuxiliaryPlayback();
     };
     const handleError = () => {
       setIsPlaying(false);
       setIsAudioLoading(false);
+      pauseAuxiliaryPlayback();
     };
 
     audioElement.addEventListener('timeupdate', handleTimeUpdate);
@@ -483,7 +841,7 @@ export function useLandingExperience() {
       audioElement.removeEventListener('ended', handleEnded);
       audioElement.removeEventListener('error', handleError);
     };
-  }, [audioElement, selectedStory?.durationSeconds]);
+  }, [audioElement, pauseAuxiliaryPlayback, selectedStory?.durationSeconds, syncAuxiliaryPlayback]);
 
   useEffect(() => {
     if (!audioElement) {
@@ -491,6 +849,7 @@ export function useLandingExperience() {
     }
 
     if (!selectedStory?.sound) {
+      pauseAuxiliaryPlayback();
       audioElement.pause();
       audioElement.removeAttribute('src');
       audioElement.load();
@@ -503,6 +862,7 @@ export function useLandingExperience() {
     const shouldResume = pendingResumeRef.current;
     pendingResumeRef.current = false;
 
+    pauseAuxiliaryPlayback();
     audioElement.pause();
     audioElement.src = selectedStory.sound;
     audioElement.load();
@@ -518,8 +878,19 @@ export function useLandingExperience() {
     void audioElement.play().catch(() => {
       setIsPlaying(false);
       setIsAudioLoading(false);
+      pauseAuxiliaryPlayback();
     });
-  }, [audioElement, selectedStory?.id, selectedStory?.sound]);
+  }, [audioElement, pauseAuxiliaryPlayback, selectedStory?.id, selectedStory?.sound]);
+
+  useEffect(() => {
+    effectLevelsRef.current = effectLevels;
+
+    if (!audioElement || audioElement.paused) {
+      return;
+    }
+
+    void syncAuxiliaryPlayback(true, selectedStoryRef.current, effectLevels);
+  }, [audioElement, effectLevels, syncAuxiliaryPlayback]);
 
   const setAudioRef = useCallback((node: HTMLAudioElement | null) => {
     setAudioElement(node);
@@ -552,6 +923,19 @@ export function useLandingExperience() {
     audioElement.pause();
   }, [audioElement, selectedStory?.sound]);
 
+  const toggleStoryPlayback = useCallback(
+    async (story: Story) => {
+      if (selectedStory?.id === story.id) {
+        await togglePlayPause();
+        return;
+      }
+
+      pendingResumeRef.current = true;
+      setSelectedStoryId(story.id);
+    },
+    [selectedStory?.id, togglePlayPause],
+  );
+
   const seekBy = useCallback(
     (deltaSeconds: number) => {
       if (!audioElement) {
@@ -568,6 +952,15 @@ export function useLandingExperience() {
     [audioElement, selectedStory?.durationSeconds],
   );
 
+  const setEffectLevel = useCallback((id: MixerLevelId, value: number) => {
+    const nextLevel = clampMixerLevel(value);
+    setEffectLevelsState((previous) => {
+      const next = { ...previous, [id]: nextLevel };
+      effectLevelsRef.current = next;
+      return next;
+    });
+  }, []);
+
   const resetFilters = useCallback(() => {
     setMainTab(ALL_MAIN_TAB_ID);
     setSubTab(ALL_SUB_TAB_ID);
@@ -577,14 +970,9 @@ export function useLandingExperience() {
   const changeMainTab = useCallback(
     (nextTab: MainTabId) => {
       setMainTab(nextTab);
-      if (typeof nextTab === 'number') {
-        const nextSubcategories = subcategoriesByCategory.get(nextTab) ?? [];
-        setSubTab(nextSubcategories[0]?.id ?? ALL_SUB_TAB_ID);
-      } else {
-        setSubTab(ALL_SUB_TAB_ID);
-      }
+      setSubTab(ALL_SUB_TAB_ID);
     },
-    [subcategoriesByCategory],
+    [],
   );
 
   useEffect(() => {
@@ -609,7 +997,7 @@ export function useLandingExperience() {
 
     const isStillValid = validSubcategories.some((subcategory) => subcategory.id === subTab);
     if (!isStillValid) {
-      setSubTab(validSubcategories[0]?.id ?? ALL_SUB_TAB_ID);
+      setSubTab(ALL_SUB_TAB_ID);
     }
   }, [mainTab, subTab, subcategoriesByCategory]);
 
@@ -626,14 +1014,19 @@ export function useLandingExperience() {
     search,
     seekBy,
     selectedStory,
+    selectedStoryId,
     selectStory,
     setAudioRef,
+    setEffectLevel,
     setSearch,
     setSubTab,
     stories,
     subTab,
     togglePlayPause,
+    toggleStoryPlayback,
     changeMainTab,
+    effectLevels,
+    hasStoryMusic: Boolean(selectedStory?.musicFile),
     isAudioLoading,
     isPlaying,
   };
@@ -671,23 +1064,25 @@ function DeviceMiniPlayer({
 
   return (
     <div className="relative overflow-hidden border-t border-white/5 bg-[#071728]/95 backdrop-blur-xl">
-      <div className="flex items-center justify-between gap-3 px-4 py-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="h-11 w-11 overflow-hidden rounded-xl bg-[#111827]">
+      <div className="flex min-h-[72px] items-center justify-between gap-3 px-4 py-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-[#111827]">
             <img src={image} alt={title} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
           </div>
-          <div className="min-w-0">
-            <p className="text-[9px] font-black uppercase tracking-[0.28em] text-violet-400">{copy.nowPlaying}</p>
-            <p className="truncate text-sm font-semibold text-white">{title}</p>
+          <div className="min-w-0 flex-1">
+            <p className="truncate whitespace-nowrap text-[8px] font-black uppercase leading-none tracking-[0.22em] text-violet-400 sm:text-[9px]">
+              {copy.nowPlaying}
+            </p>
+            <p className="truncate pt-1 text-sm font-semibold leading-none text-white">{title}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1 text-white">
+        <div className="flex shrink-0 items-center gap-1 text-white">
           <button
             type="button"
             onClick={onSeekBackward}
             disabled={controlsDisabled || isLoading}
-            className="relative flex h-10 w-10 items-center justify-center rounded-full text-slate-200 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+            className="relative flex h-9 w-9 items-center justify-center rounded-full text-slate-200 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40 sm:h-10 sm:w-10"
             aria-label="Seek backward 30 seconds"
           >
             <RotateCcw className="h-4 w-4" />
@@ -698,7 +1093,7 @@ function DeviceMiniPlayer({
             type="button"
             onClick={onPlayPause}
             disabled={controlsDisabled}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-600 text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-slate-500"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-600 text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-slate-500 sm:h-11 sm:w-11"
             aria-label={isPlaying ? 'Pause story' : 'Play story'}
           >
             {isLoading ? (
@@ -714,7 +1109,7 @@ function DeviceMiniPlayer({
             type="button"
             onClick={onSeekForward}
             disabled={controlsDisabled || isLoading}
-            className="relative flex h-10 w-10 items-center justify-center rounded-full text-slate-200 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+            className="relative flex h-9 w-9 items-center justify-center rounded-full text-slate-200 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40 sm:h-10 sm:w-10"
             aria-label="Seek forward 30 seconds"
           >
             <RotateCw className="h-4 w-4" />
@@ -799,7 +1194,10 @@ function SearchField({
 function StoryTile({
   story,
   selected,
+  playing,
+  loading,
   onSelect,
+  onTogglePlay,
   popularLabel,
   publishedLabel,
   comingSoonLabel,
@@ -807,23 +1205,36 @@ function StoryTile({
 }: {
   story: Story;
   selected: boolean;
+  playing: boolean;
+  loading: boolean;
   onSelect: (story: Story) => void;
+  onTogglePlay: (story: Story) => void;
   popularLabel: string;
   publishedLabel: string;
   comingSoonLabel: string;
   compact?: boolean;
 }) {
+  const canPlay = Boolean(story.sound);
+
   return (
-    <motion.button
-      type="button"
+    <motion.div
       whileHover={{ y: -4 }}
-      whileTap={{ scale: 0.985 }}
-      onClick={() => onSelect(story)}
       className={`group overflow-hidden rounded-[1.8rem] border text-left ${
         selected ? 'border-violet-500/70 bg-white/[0.04]' : 'border-white/5 bg-white/[0.02]'
       }`}
     >
-      <div className={`relative ${compact ? 'aspect-[6/5]' : 'aspect-[4/5]'}`}>
+      <div
+        className={`relative cursor-pointer ${compact ? 'aspect-[6/5]' : 'aspect-[4/5]'}`}
+        onClick={() => onSelect(story)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onSelect(story);
+          }
+        }}
+        role="button"
+        tabIndex={0}
+      >
         <img
           src={story.image}
           alt={story.title}
@@ -860,20 +1271,43 @@ function StoryTile({
         <div className="absolute inset-x-0 bottom-0 p-4">
           <div className="flex items-end justify-between gap-3">
             <div className="min-w-0">
-              <p className={`font-serif font-bold text-white ${compact ? 'text-lg leading-5' : 'text-2xl leading-7'}`}>
+              <p
+                className={`font-serif font-bold text-white ${
+                  compact ? 'text-base leading-5 md:text-2xl md:leading-7' : 'text-lg leading-5 md:text-2xl md:leading-7'
+                }`}
+              >
                 {story.title}
               </p>
-              <p className="mt-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-300">
+              <p className="mt-2 text-[9px] font-black uppercase tracking-[0.18em] text-slate-300 md:text-[11px]">
                 {story.duration} - {story.narrator}
               </p>
             </div>
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-black transition group-hover:bg-violet-500 group-hover:text-white">
-              <Play className="ml-0.5 h-5 w-5 fill-current" />
-            </span>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                void onTogglePlay(story);
+              }}
+              disabled={!canPlay}
+              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition ${
+                selected && playing
+                  ? 'bg-white text-black'
+                  : 'bg-violet-500 text-white'
+              } disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-slate-500`}
+              aria-label={selected && playing ? 'Pause story' : 'Play story'}
+            >
+              {loading && selected ? (
+                <LoaderCircle className="h-5 w-5 animate-spin" />
+              ) : selected && playing ? (
+                <Pause className="h-5 w-5 fill-current" />
+              ) : (
+                <Play className="ml-0.5 h-5 w-5 fill-current" />
+              )}
+            </button>
           </div>
         </div>
       </div>
-    </motion.button>
+    </motion.div>
   );
 }
 
@@ -904,72 +1338,65 @@ function DeviceLibraryPreview({
 
         <SearchField lang={lang} value={experience.search} onChange={experience.setSearch} compact />
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => experience.changeMainTab(FAVORITES_TAB_ID)}
-            className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] transition ${
-              experience.mainTab === FAVORITES_TAB_ID
-                ? 'bg-violet-500 text-white'
-                : 'border border-white/8 bg-white/[0.03] text-slate-400'
-            }`}
-          >
-            {copy.favorites}
-          </button>
-          <button
-            type="button"
-            onClick={() => experience.changeMainTab(ALL_MAIN_TAB_ID)}
-            className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] transition ${
-              experience.mainTab === ALL_MAIN_TAB_ID
-                ? 'bg-violet-500 text-white'
-                : 'border border-white/8 bg-white/[0.03] text-slate-400'
-            }`}
-          >
-            {copy.all}
-          </button>
-          {experience.categories.slice(0, 4).map((category) => (
+        <div className="hide-scrollbar mt-4 overflow-x-auto pb-1">
+          <div className="flex w-max gap-2 pr-2">
             <button
-              key={category.id}
               type="button"
-              onClick={() => experience.changeMainTab(category.id)}
-              className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] transition ${
-                experience.mainTab === category.id
+              onClick={() => experience.changeMainTab(ALL_MAIN_TAB_ID)}
+              className={`shrink-0 cursor-pointer rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] transition ${
+                experience.mainTab === ALL_MAIN_TAB_ID
                   ? 'bg-violet-500 text-white'
-                  : 'border border-white/8 bg-white/[0.03] text-slate-400'
-              }`}
-            >
-              {category.label}
-            </button>
-          ))}
-        </div>
-
-        {experience.currentSubcategories.length ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => experience.setSubTab(ALL_SUB_TAB_ID)}
-              className={`rounded-full px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.18em] transition ${
-                experience.subTab === ALL_SUB_TAB_ID
-                  ? 'bg-white text-black'
                   : 'border border-white/8 bg-white/[0.03] text-slate-400'
               }`}
             >
               {copy.all}
             </button>
-            {experience.currentSubcategories.slice(0, 4).map((subcategory) => (
+            {experience.categories.slice(0, 4).map((category) => (
               <button
-                key={subcategory.id}
+                key={category.id}
                 type="button"
-                onClick={() => experience.setSubTab(subcategory.id)}
-                className={`rounded-full px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.18em] transition ${
-                  experience.subTab === subcategory.id
+                onClick={() => experience.changeMainTab(category.id)}
+                className={`shrink-0 cursor-pointer rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] transition ${
+                  experience.mainTab === category.id
+                    ? 'bg-violet-500 text-white'
+                    : 'border border-white/8 bg-white/[0.03] text-slate-400'
+                }`}
+              >
+                {category.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {experience.currentSubcategories.length ? (
+          <div className="hide-scrollbar mt-3 overflow-x-auto pb-1">
+            <div className="flex w-max gap-2 pr-2">
+              <button
+                type="button"
+                onClick={() => experience.setSubTab(ALL_SUB_TAB_ID)}
+                className={`shrink-0 cursor-pointer rounded-full px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.18em] transition ${
+                  experience.subTab === ALL_SUB_TAB_ID
                     ? 'bg-white text-black'
                     : 'border border-white/8 bg-white/[0.03] text-slate-400'
                 }`}
               >
-                {subcategory.label}
+                {copy.all}
               </button>
-            ))}
+              {experience.currentSubcategories.slice(0, 4).map((subcategory) => (
+                <button
+                  key={subcategory.id}
+                  type="button"
+                  onClick={() => experience.setSubTab(subcategory.id)}
+                  className={`shrink-0 cursor-pointer rounded-full px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.18em] transition ${
+                    experience.subTab === subcategory.id
+                      ? 'bg-white text-black'
+                      : 'border border-white/8 bg-white/[0.03] text-slate-400'
+                  }`}
+                >
+                  {subcategory.label}
+                </button>
+              ))}
+            </div>
           </div>
         ) : null}
 
@@ -1059,17 +1486,19 @@ function DeviceHomePreview({
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          {[currentStory?.categoryLabel, currentStory?.subcategoryLabel, currentStory?.sound ? 'Audio' : copy.noAudio]
-            .filter(Boolean)
-            .map((label) => (
-              <span
-                key={label}
-                className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-slate-300"
-              >
-                {label}
-              </span>
-            ))}
+        <div className="hide-scrollbar mt-4 overflow-x-auto pb-1">
+          <div className="flex w-max gap-2 pr-2">
+            {[currentStory?.categoryLabel, currentStory?.subcategoryLabel, currentStory?.sound ? 'Audio' : copy.noAudio]
+              .filter(Boolean)
+              .map((label) => (
+                <span
+                  key={label}
+                  className="shrink-0 rounded-full border border-white/8 bg-white/[0.03] px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-slate-300"
+                >
+                  {label}
+                </span>
+              ))}
+          </div>
         </div>
 
         <div className="mt-6">
@@ -1124,12 +1553,100 @@ function DeviceHomePreview({
 export function HeroDeviceShowcase({ lang, experience }: HeroDeviceShowcaseProps) {
   return (
     <div className="relative z-10 flex flex-col items-center justify-center gap-20 md:flex-row md:gap-0">
-      <div className="relative z-20 h-[500px] w-[240px] -translate-x-[40%] overflow-hidden rounded-[3rem] border-[10px] border-[#1a1a1a] bg-[#0a0a0a] shadow-[0_80px_150px_-30px_rgba(0,0,0,0.8)] md:h-[580px] md:w-[280px] md:-translate-x-[40px] md:rotate-[-5deg]">
+      <div className="relative z-20 h-[500px] w-[240px] -translate-x-[28%] overflow-hidden rounded-[3rem] border-[10px] border-[#1a1a1a] bg-[#0a0a0a] shadow-[0_80px_150px_-30px_rgba(0,0,0,0.8)] md:h-[580px] md:w-[280px] md:-translate-x-[40px] md:rotate-[-5deg]">
         <DeviceHomePreview lang={lang} experience={experience} />
       </div>
 
-      <div className="relative z-10 aspect-[4/3] w-[320px] translate-x-[30%] overflow-hidden rounded-[2.5rem] border-[12px] border-[#1a1a1a] bg-[#0a0a0a] shadow-[0_80px_150px_-30px_rgba(0,0,0,0.8)] md:w-full md:max-w-[550px] md:translate-x-[40px] md:-translate-y-10 md:rotate-[3deg] md:rounded-[3rem] md:border-[14px]">
+      <div className="relative z-10 aspect-[4/3] w-[320px] translate-x-[12%] overflow-hidden rounded-[2.5rem] border-[12px] border-[#1a1a1a] bg-[#0a0a0a] shadow-[0_80px_150px_-30px_rgba(0,0,0,0.8)] md:w-full md:max-w-[550px] md:translate-x-[40px] md:-translate-y-10 md:rotate-[3deg] md:rounded-[3rem] md:border-[14px]">
         <DeviceLibraryPreview lang={lang} experience={experience} />
+      </div>
+    </div>
+  );
+}
+
+export function FixedMiniPlayerBar({ lang, experience }: FixedMiniPlayerBarProps) {
+  const copy = useUiCopy(lang);
+  const story = experience.selectedStory;
+
+  if (!story) {
+    return null;
+  }
+
+  return (
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[140] md:px-6 md:pb-5">
+      <div className="pointer-events-auto w-full overflow-hidden border-t border-white/8 bg-[rgba(11,27,45,0.96)] shadow-none backdrop-blur-2xl md:mx-auto md:max-w-5xl md:rounded-[1.75rem] md:border md:shadow-[0_25px_80px_-20px_rgba(0,0,0,0.85)]">
+        <div
+          className="flex min-h-[76px] items-center justify-between gap-3 px-3 py-3 sm:px-4 md:min-h-[84px] md:px-5"
+          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.75rem)' }}
+        >
+          <button
+            type="button"
+            onClick={() => document.getElementById('stories')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="flex min-w-0 flex-1 items-center gap-3 text-left"
+          >
+            <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-[#111827] sm:h-12 sm:w-12">
+              <img src={story.image} alt={story.title} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate whitespace-nowrap text-[8px] font-black uppercase leading-none tracking-[0.22em] text-violet-400 sm:text-[9px]">
+                {copy.nowPlaying}
+              </p>
+              <p className="truncate pt-1 text-sm font-semibold leading-none text-white md:text-base">{story.title}</p>
+              <p className="hidden truncate text-[10px] font-black uppercase tracking-[0.16em] text-slate-400 md:block">
+                {story.duration} - {story.narrator}
+              </p>
+            </div>
+          </button>
+
+          <div className="flex shrink-0 items-center gap-1 sm:gap-1.5 md:gap-3">
+            <button
+              type="button"
+              onClick={() => experience.seekBy(-30)}
+              disabled={experience.isAudioLoading || !story.sound}
+              className="relative flex h-9 w-9 items-center justify-center rounded-full text-slate-200 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40 sm:h-10 sm:w-10"
+              aria-label="Seek backward 30 seconds"
+            >
+              <RotateCcw className="h-4 w-4" />
+              <span className="pointer-events-none absolute mt-5 text-[7px] font-black">30</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => void experience.togglePlayPause()}
+              disabled={!story.sound}
+              className={`flex h-10 w-10 items-center justify-center rounded-full transition sm:h-11 sm:w-11 md:h-12 md:w-12 ${
+                experience.isPlaying ? 'bg-white text-black' : 'bg-violet-500 text-white'
+              } disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-slate-500`}
+              aria-label={experience.isPlaying ? 'Pause story' : 'Play story'}
+            >
+              {experience.isAudioLoading ? (
+                <LoaderCircle className="h-5 w-5 animate-spin" />
+              ) : experience.isPlaying ? (
+                <Pause className="h-5 w-5 fill-current" />
+              ) : (
+                <Play className="ml-0.5 h-5 w-5 fill-current" />
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => experience.seekBy(30)}
+              disabled={experience.isAudioLoading || !story.sound}
+              className="relative flex h-9 w-9 items-center justify-center rounded-full text-slate-200 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40 sm:h-10 sm:w-10"
+              aria-label="Seek forward 30 seconds"
+            >
+              <RotateCw className="h-4 w-4" />
+              <span className="pointer-events-none absolute mt-5 text-[7px] font-black">30</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="h-[3px] w-full bg-white/10">
+          <div
+            className="h-full bg-violet-500 transition-[width] duration-300"
+            style={{ width: `${Math.max(0, Math.min(1, experience.progressRatio)) * 100}%` }}
+          />
+        </div>
       </div>
     </div>
   );
@@ -1199,7 +1716,7 @@ export function LandingLibrarySection({
         <div className="rounded-[2.5rem] border border-white/5 bg-white/[0.02] p-5 backdrop-blur-2xl md:p-8">
           <div className="mb-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
             <SearchField lang={lang} value={experience.search} onChange={experience.setSearch} />
-            <div className="flex items-center justify-between gap-3 rounded-[1.4rem] border border-white/5 bg-[#0c1827] px-4 py-3">
+            <div className="flex items-center justify-between gap-3 px-1 py-1">
               <div className="flex items-center gap-3">
                 <SlidersHorizontal className="h-4 w-4 text-violet-400" />
                 <div>
@@ -1217,72 +1734,65 @@ export function LandingLibrarySection({
             </div>
           </div>
 
-          <div className="mb-5 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => experience.changeMainTab(FAVORITES_TAB_ID)}
-              className={`rounded-full px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] transition ${
-                experience.mainTab === FAVORITES_TAB_ID
-                  ? 'bg-violet-500 text-white'
-                  : 'border border-white/8 bg-white/[0.02] text-slate-400'
-              }`}
-            >
-              {copy.favorites}
-            </button>
-            <button
-              type="button"
-              onClick={() => experience.changeMainTab(ALL_MAIN_TAB_ID)}
-              className={`rounded-full px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] transition ${
-                experience.mainTab === ALL_MAIN_TAB_ID
-                  ? 'bg-violet-500 text-white'
-                  : 'border border-white/8 bg-white/[0.02] text-slate-400'
-              }`}
-            >
-              {copy.all}
-            </button>
-            {experience.categories.map((category) => (
+          <div className="hide-scrollbar mb-5 overflow-x-auto pb-1">
+            <div className="flex w-max gap-2 pr-2">
               <button
-                key={category.id}
                 type="button"
-                onClick={() => experience.changeMainTab(category.id)}
-                className={`rounded-full px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] transition ${
-                  experience.mainTab === category.id
+                onClick={() => experience.changeMainTab(ALL_MAIN_TAB_ID)}
+                className={`shrink-0 cursor-pointer rounded-full px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] transition ${
+                  experience.mainTab === ALL_MAIN_TAB_ID
                     ? 'bg-violet-500 text-white'
                     : 'border border-white/8 bg-white/[0.02] text-slate-400'
                 }`}
               >
-                {category.label}
+                {copy.all}
               </button>
-            ))}
+              {experience.categories.map((category) => (
+                <button
+                  key={category.id}
+                  type="button"
+                  onClick={() => experience.changeMainTab(category.id)}
+                  className={`shrink-0 cursor-pointer rounded-full px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] transition ${
+                    experience.mainTab === category.id
+                      ? 'bg-violet-500 text-white'
+                      : 'border border-white/8 bg-white/[0.02] text-slate-400'
+                  }`}
+                >
+                  {category.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {experience.currentSubcategories.length ? (
-            <div className="mb-8 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => experience.setSubTab(ALL_SUB_TAB_ID)}
-                className={`rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] transition ${
-                  experience.subTab === ALL_SUB_TAB_ID
-                    ? 'bg-white text-black'
-                    : 'border border-white/8 bg-[#0c1827] text-slate-400'
-                }`}
-              >
-                {copy.all}
-              </button>
-              {experience.currentSubcategories.map((subcategory) => (
+            <div className="hide-scrollbar mb-8 overflow-x-auto pb-1">
+              <div className="flex w-max gap-2 pr-2">
                 <button
-                  key={subcategory.id}
                   type="button"
-                  onClick={() => experience.setSubTab(subcategory.id)}
-                  className={`rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] transition ${
-                    experience.subTab === subcategory.id
+                  onClick={() => experience.setSubTab(ALL_SUB_TAB_ID)}
+                  className={`shrink-0 cursor-pointer rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] transition ${
+                    experience.subTab === ALL_SUB_TAB_ID
                       ? 'bg-white text-black'
                       : 'border border-white/8 bg-[#0c1827] text-slate-400'
                   }`}
                 >
-                  {subcategory.label}
+                  {copy.all}
                 </button>
-              ))}
+                {experience.currentSubcategories.map((subcategory) => (
+                  <button
+                    key={subcategory.id}
+                    type="button"
+                    onClick={() => experience.setSubTab(subcategory.id)}
+                    className={`shrink-0 cursor-pointer rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] transition ${
+                      experience.subTab === subcategory.id
+                        ? 'bg-white text-black'
+                        : 'border border-white/8 bg-[#0c1827] text-slate-400'
+                    }`}
+                  >
+                    {subcategory.label}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : null}
 
@@ -1294,16 +1804,20 @@ export function LandingLibrarySection({
               <p className="mt-2 text-sm text-slate-400">{experience.errorMessage}</p>
             </div>
           ) : experience.filteredStories.length ? (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
               {experience.filteredStories.map((story) => (
                 <StoryTile
                   key={story.id}
                   story={story}
                   selected={experience.selectedStory?.id === story.id}
+                  playing={experience.selectedStoryId === story.id && experience.isPlaying}
+                  loading={experience.selectedStoryId === story.id && experience.isAudioLoading}
                   onSelect={experience.selectStory}
+                  onTogglePlay={experience.toggleStoryPlayback}
                   popularLabel={story.favorite ? copy.favorites : popularLabel}
                   publishedLabel={publishedLabel}
                   comingSoonLabel={comingSoonLabel}
+                  compact
                 />
               ))}
             </div>
