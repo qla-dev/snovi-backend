@@ -1,0 +1,240 @@
+export type Language = 'bs' | 'en';
+
+export const translations = {
+  bs: {
+    nav: {
+      features: 'Mogućnosti',
+      samples: 'Poslušaj',
+      effects: 'Ambijenti',
+      stories: 'Biblioteka',
+      psychology: 'Metodologija',
+    },
+    hero: {
+      title: 'Uspavajte maštu. Probudite mir.',
+      subtitle: 'Naučno utemeljeni zvučni pejzaži i bezvremenske priče koji pretvaraju odlazak u krevet u najljepši dio dana.',
+      cta: 'Istražite magiju',
+      tagline: 'priprema, pozor, san.',
+      badges: {
+        methodology: 'Metodologija',
+        neuroAcoustics: 'Neuro-akustika',
+        sleepQuality: 'Kvalitet sna',
+        improvement: '+42% Poboljšanje',
+        liveListeners: 'Djece trenutno spava',
+        nowPlaying: 'Trenutno svira',
+        community: 'Zajednica',
+        parents: '50k+ Roditelja',
+      },
+      download: {
+        appStore: 'Uskoro na App Store',
+        googlePlay: 'Uskoro na Google Play',
+      },
+      review: {
+        text: '"Spas za naše večeri!"',
+        author: 'Mama Lejla',
+      },
+      nowPlaying: {
+        title: 'Ružno pače',
+      }
+    },
+    waitlist: {
+      title: 'Budite prvi koji će saznati',
+      subtitle: 'Pridružite se našoj ekskluzivnoj listi čekanja i dobijte rani pristup snovi.fm.',
+      placeholder: 'Vaša email adresa',
+      button: 'Pridruži se',
+      success: 'Hvala! Javit ćemo vam se uskoro.',
+    },
+    psychology: {
+      title: 'Nauka iza snova',
+      description: 'Nismo samo aplikacija za priče. Mi smo rezultat saradnje dječijih psihologa i audio inženjera, dizajnirani da sinhronizuju dječiji um sa frekvencijama dubokog sna.',
+      point1: 'Naracija u ritmu daha koja prirodno usporava otkucaje srca.',
+      point2: '3D zvučna izolacija koja stvara siguran auditivni prostor.',
+      point3: 'Potpuna eliminacija vizuelnog podražaja za maksimalnu produkciju melatonina.',
+      brainSync: 'Sinhronizacija mozga',
+      clinicalStudy: 'Klinička studija',
+      successRate: '98% Stopa uspjeha',
+      neuroAcoustics: 'Neuro-akustika',
+      auditoryIsolation: 'Auditivna izolacija',
+      melatoninFocus: 'Melatoninski fokus',
+    },
+    ritual: {
+      title: 'Ritual',
+      subtitle: '3 Koraka do Mira',
+      autoOff: 'Auto-gašenje',
+      step1: {
+        title: 'Priprema',
+        text: 'Odaberite priču i ambijent zajedno.',
+      },
+      step2: {
+        title: 'Pozor',
+        text: 'Ugasite svjetla i pustite mašti na volju.',
+      },
+      step3: {
+        title: 'San',
+        text: 'Aplikacija se gasi sama dok oni sanjaju.',
+      }
+    },
+    dedication: {
+      title: 'Dizajnirano za roditelje. Voljeno od djece.',
+      description: 'Vratite mir u svoj dom. snovi.fm preuzima teret uspavljivanja, ostavljajući vam prostor za čistu bliskost i nježnost.',
+      mission: 'Naša Misija',
+      feature1: { title: 'Bez ekrana', text: 'Dizajnirano za slušanje, ne gledanje.' },
+      feature2: { title: 'Lokalni naratori', text: 'Glasovi koji zvuče kao dom.' },
+      feature3: { title: 'Offline mod', text: 'Ponesite magiju bilo gdje.' },
+      feature4: { title: 'Bez reklama', text: 'Potpuno siguran prostor.' },
+      verifiedBy: 'Verifikovano od strane',
+      pediatricians: 'Pedijatara',
+      quote: '"Konačno smo vratili mir u naše večeri. Hvala vam."',
+      author: 'Mama Amra',
+    },
+    samples: {
+      title: 'Osjetite mir',
+      play: 'Pusti uzorak',
+      pause: 'Pauziraj',
+    },
+    effects: {
+      title: 'Zvučni Pejzaži',
+      description: 'Kreirajte savršenu atmosferu miješanjem prirodnih elemenata. Vaše dijete bira kišu, vi birate jačinu vatre.',
+      rain: 'Ljetna kiša',
+      forest: 'Noćna šuma',
+      waves: 'Umirujući valovi',
+      fire: 'Pucketanje vatre',
+      spatialAudio: '3D Prostorni Audio',
+    },
+    stories: {
+      title: 'Svijet Mašte',
+      published: 'Dostupno odmah',
+      comingSoon: 'U pripremi',
+      readMore: 'Detalji priče',
+      viewAll: 'Vidi sve',
+      popular: 'Najpopularnije',
+      safeForKids: '100% Sigurno za djecu',
+    },
+    footer: {
+      tagline: 'Najljepši put do mirnih snova za vašu porodicu.',
+      navigation: 'Navigacija',
+      social: 'Društvene mreže',
+      privacy: 'Privatnost',
+      terms: 'Uslovi',
+      cookies: 'Kolačići',
+      rights: 'snovi.fm - Sva prava zadržana.',
+    }
+  },
+  en: {
+    nav: {
+      features: 'Features',
+      samples: 'Listen',
+      effects: 'Ambiances',
+      stories: 'Library',
+      psychology: 'Methodology',
+    },
+    hero: {
+      title: 'Lull the Imagination. Awaken Peace.',
+      subtitle: 'Scientifically-backed soundscapes and timeless stories that turn bedtime into the most beautiful part of the day.',
+      cta: 'Explore the Magic',
+      tagline: 'ready, set, sleep.',
+      badges: {
+        methodology: 'Methodology',
+        neuroAcoustics: 'Neuro-Acoustics',
+        sleepQuality: 'Sleep Quality',
+        improvement: '+42% Improvement',
+        liveListeners: 'Children sleeping now',
+        nowPlaying: 'Now Playing',
+        community: 'Community',
+        parents: '50k+ Parents',
+      },
+      download: {
+        appStore: 'Soon on App Store',
+        googlePlay: 'Soon on Google Play',
+      },
+      review: {
+        text: '"A lifesaver for our evenings!"',
+        author: 'Mama Lejla',
+      },
+      nowPlaying: {
+        title: 'The Ugly Duckling',
+      }
+    },
+    waitlist: {
+      title: 'Be the First to Know',
+      subtitle: 'Join our exclusive waitlist and get early access to snovi.fm.',
+      placeholder: 'Your email address',
+      button: 'Join Waitlist',
+      success: 'Thank you! We will be in touch soon.',
+    },
+    psychology: {
+      title: 'The Science of Dreams',
+      description: 'We are not just a story app. We are the result of collaboration between child psychologists and audio engineers, designed to synchronize the child\'s mind with deep sleep frequencies.',
+      point1: 'Breath-paced narration that naturally slows down the heart rate.',
+      point2: '3D sound isolation creating a secure auditory sanctuary.',
+      point3: 'Complete elimination of visual stimuli for maximum melatonin production.',
+      brainSync: 'Real-time Brain Sync',
+      clinicalStudy: 'Clinical Study',
+      successRate: '98% Success Rate',
+      neuroAcoustics: 'Neuro-acoustics',
+      auditoryIsolation: 'Auditory Isolation',
+      melatoninFocus: 'Melatonin Focus',
+    },
+    ritual: {
+      title: 'Ritual',
+      subtitle: '3 Steps to Peace',
+      autoOff: 'Auto-off',
+      step1: {
+        title: 'Preparation',
+        text: 'Choose a story and ambiance together.',
+      },
+      step2: {
+        title: 'Attention',
+        text: 'Turn off the lights and let imagination run wild.',
+      },
+      step3: {
+        title: 'Sleep',
+        text: 'The app turns off by itself while they dream.',
+      }
+    },
+    dedication: {
+      title: 'Designed for Parents. Loved by Children.',
+      description: 'Bring peace back to your home. snovi.fm takes the burden of putting children to sleep, leaving you space for pure closeness and tenderness.',
+      mission: 'Our Mission',
+      feature1: { title: 'Screen-free', text: 'Designed for listening, not watching.' },
+      feature2: { title: 'Local Narrators', text: 'Voices that sound like home.' },
+      feature3: { title: 'Offline Mode', text: 'Take the magic anywhere.' },
+      feature4: { title: 'No Ads', text: 'Completely safe space.' },
+      verifiedBy: 'Verified by',
+      pediatricians: 'Pediatricians',
+      quote: '"Finally, we brought peace back to our evenings. Thank you."',
+      author: 'Mama Amra',
+    },
+    samples: {
+      title: 'Feel the Peace',
+      play: 'Play Sample',
+      pause: 'Pause',
+    },
+    effects: {
+      title: 'Soundscapes',
+      description: 'Create the perfect atmosphere by mixing natural elements. Your child chooses the rain, you choose the fire intensity.',
+      rain: 'Summer Rain',
+      forest: 'Night Forest',
+      waves: 'Calming Waves',
+      fire: 'Crackling Fire',
+      spatialAudio: '3D Spatial Audio',
+    },
+    stories: {
+      title: 'World of Imagination',
+      published: 'Available Now',
+      comingSoon: 'Coming Soon',
+      readMore: 'Story Details',
+      viewAll: 'View All',
+      popular: 'Bestseller',
+      safeForKids: '100% Safe for Kids',
+    },
+    footer: {
+      tagline: 'The most beautiful path to peaceful dreams for your family.',
+      navigation: 'Navigation',
+      social: 'Social',
+      privacy: 'Privacy',
+      terms: 'Terms',
+      cookies: 'Cookies',
+      rights: 'snovi.fm - All rights reserved.',
+    }
+  }
+};
