@@ -1270,7 +1270,7 @@ function StoryTile({
       }`}
     >
       <div
-        className={`relative cursor-pointer ${compact ? 'aspect-[6/5]' : 'aspect-[3/5] md:aspect-[4/5]'}`}
+        className={`relative cursor-pointer ${compact ? 'aspect-[3/4] md:aspect-[6/5]' : 'aspect-[3/5] md:aspect-[4/5]'}`}
         onClick={() => onSelect(story)}
         onKeyDown={(event) => {
           if (event.key === 'Enter' || event.key === ' ') {
@@ -1704,7 +1704,7 @@ function LibrarySectionSkeleton() {
       {Array.from({ length: 6 }).map((_, index) => (
         <div
           key={`library-skeleton-${index}`}
-          className="aspect-[3/5] animate-pulse rounded-[2rem] border border-white/5 bg-white/[0.03] md:aspect-[4/5]"
+          className="aspect-[3/4] animate-pulse rounded-[2rem] border border-white/5 bg-white/[0.03] md:aspect-[6/5]"
         />
       ))}
     </div>
@@ -1759,7 +1759,7 @@ export function LandingLibrarySection({
           </div>
         </div>
 
-        <div className="rounded-[2.5rem] border border-white/5 bg-white/[0.02] p-5 backdrop-blur-2xl md:p-8">
+        <div>
           <div className="mb-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
             <SearchField lang={lang} value={experience.search} onChange={experience.setSearch} />
             <div className="flex items-center justify-between gap-3 px-1 py-1">

@@ -79,6 +79,13 @@ function AnimatedWidgetShell({ children, className = '', strength = 1 }: Animate
   );
 }
 
+const brandLogoSrc = `${import.meta.env.BASE_URL}logo.png`;
+const qlaLogoSrc = 'https://deklarant.ai/build/images/logo-qla-dark.png';
+
+function BrandLogo({ className = '' }: { className?: string }) {
+  return <img src={brandLogoSrc} alt="snovi.fm" className={className} />;
+}
+
 export default function App() {
   const [lang, setLang] = useState<Language>('bs');
   const [scrolled, setScrolled] = useState(false);
@@ -156,15 +163,9 @@ export default function App() {
     <div className="min-h-screen bg-[#050505] pb-28 font-sans text-white selection:bg-violet-500/30 md:pb-36">
       <audio ref={landingExperience.setAudioRef} preload="metadata" className="hidden" />
       {/* Navigation */}
-      <nav className={`fixed inset-x-0 top-0 z-[100] flex items-center justify-between px-6 py-4 transition-[padding,background-color,border-color,backdrop-filter] duration-500 ${scrolled ? 'glass border-b border-white/5 py-3' : 'bg-transparent'}`}>
-        <div className="flex items-center gap-3">
-          <motion.div 
-            whileHover={{ rotate: 15 }}
-            className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/20"
-          >
-            <Sparkles className="text-white w-6 h-6" />
-          </motion.div>
-          <span className="text-2xl font-bold tracking-tighter text-white">snovi<span className="text-violet-500">.fm</span></span>
+      <nav className={`fixed inset-x-0 top-0 z-[100] flex items-center justify-between px-6 transition-[background-color,border-color,backdrop-filter] duration-500 ${scrolled ? 'glass border-b border-white/5' : 'bg-transparent'}`}>
+        <div className="flex items-center">
+          <BrandLogo className="h-20 w-auto max-w-[320px] md:h-24 md:max-w-[380px]" />
         </div>
         
         <div className="hidden lg:flex items-center gap-10 text-[13px] uppercase tracking-widest font-bold text-slate-400">
@@ -229,7 +230,7 @@ export default function App() {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
-          <div className="flex flex-col items-center text-center mb-20">
+          <div className="flex flex-col items-center text-center mb-0 md:mb-20">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -296,7 +297,7 @@ export default function App() {
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.5, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="relative max-w-6xl mx-auto mt-20 scroll-mt-32"
+            className="relative max-w-6xl mx-auto mt-0 md:mt-20 scroll-mt-32"
           >
             <HeroDeviceShowcase lang={lang} experience={landingExperience} />
             
@@ -916,13 +917,10 @@ export default function App() {
       {/* Footer */}
       <footer className="py-32 px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-16 mb-24">
+          <div className="grid md:grid-cols-5 gap-16 mb-24">
             <div className="col-span-2">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 rounded-xl bg-violet-600 flex items-center justify-center">
-                  <Sparkles className="text-white w-6 h-6" />
-                </div>
-                <span className="text-3xl font-bold tracking-tighter">snovi<span className="text-violet-500">.fm</span></span>
+              <div className="mb-8">
+                <BrandLogo className="h-14 w-auto max-w-[220px] md:h-16 md:max-w-[260px]" />
               </div>
               <p className="text-xl text-slate-500 max-w-sm leading-relaxed">
                 {t.footer.tagline}
@@ -943,6 +941,26 @@ export default function App() {
                 <li><a href="#" className="hover:text-violet-500 transition-colors">TikTok</a></li>
                 <li><a href="#" className="hover:text-violet-500 transition-colors">Facebook</a></li>
               </ul>
+            </div>
+            <div>
+              <h5 className="text-xs font-black uppercase tracking-widest text-white mb-8">{t.footer.propertyOf}</h5>
+              <a
+                href="https://qla.dev"
+                target="_blank"
+                rel="noreferrer"
+                className="group block overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.03] p-5 text-white shadow-[0_20px_60px_-30px_rgba(0,0,0,0.45)] backdrop-blur-2xl transition-transform duration-300 hover:-translate-y-1 hover:border-violet-500/30 hover:bg-white/[0.05]"
+              >
+                <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-500">{t.footer.ecosystem}</p>
+                <div className="mt-4 flex items-center justify-between gap-4">
+                  <img
+                    src={qlaLogoSrc}
+                    alt="qla.dev"
+                    className="h-8 w-auto max-w-full object-contain"
+                    referrerPolicy="no-referrer"
+                  />
+                  <ArrowRight className="h-5 w-5 text-slate-400 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-violet-400" />
+                </div>
+              </a>
             </div>
           </div>
           

@@ -96,6 +96,27 @@ body {
   height: 100%;
 }
 
+@media (max-width: 767px) {
+  .hero-lottie-bg {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 1) 0%,
+      rgba(0, 0, 0, 1) 34%,
+      rgba(0, 0, 0, 0.92) 48%,
+      rgba(0, 0, 0, 0.62) 68%,
+      rgba(0, 0, 0, 0) 88%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 1) 0%,
+      rgba(0, 0, 0, 1) 34%,
+      rgba(0, 0, 0, 0.92) 48%,
+      rgba(0, 0, 0, 0.62) 68%,
+      rgba(0, 0, 0, 0) 88%
+    );
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animated-widget {
     transition: none;
