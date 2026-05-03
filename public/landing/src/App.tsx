@@ -267,38 +267,42 @@ export default function App() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative isolate min-h-screen flex items-center overflow-hidden pt-32 pb-20">
+      <section className="relative isolate min-h-screen flex items-center overflow-hidden pt-24 pb-20 md:pt-32">
         {/* Atmospheric Backgrounds */}
         <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-          <HeroLottieBackground className="hero-lottie-bg absolute inset-0 opacity-90" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#041221] via-[#050505]/45 to-[#050505]" />
-          <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-violet-600/10 blur-[180px] rounded-full" />
-          <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] bg-indigo-600/10 blur-[180px] rounded-full" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none" />
-          
-          {/* Subtle Night Sky Sparkles */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {[...Array(40)].map((_, i) => (
-              <motion.div
-                key={i}
-                initial={{ 
-                  opacity: Math.random() * 0.3,
-                  x: `${Math.random() * 100}%`,
-                  y: `${Math.random() * 100}%`,
-                  scale: Math.random() * 0.5 + 0.5
-                }}
-                animate={{ 
-                  opacity: [0.1, 0.5, 0.1],
-                  scale: [1, 1.2, 1]
-                }}
-                transition={{ 
-                  duration: 4 + Math.random() * 6,
-                  repeat: Infinity,
-                  delay: Math.random() * 10
-                }}
-                className="absolute w-0.5 h-0.5 bg-white rounded-full"
-              />
-            ))}
+          <div className="absolute inset-x-0 top-0 z-0 w-full aspect-[1080/1920] overflow-hidden md:inset-0 md:h-full md:aspect-auto">
+            <HeroLottieBackground className="hero-lottie-bg absolute inset-0 z-0 opacity-90" />
+            <div className="absolute inset-0 z-[1] bg-gradient-to-b from-[#041221] via-[#050505]/45 to-transparent md:to-[#050505]" />
+            <div className="absolute left-[-10%] top-[-20%] z-[2] h-[70%] w-[70%] rounded-full bg-violet-600/10 blur-[180px]" />
+            <div className="absolute bottom-[-20%] right-[-10%] z-[2] h-[70%] w-[70%] rounded-full bg-indigo-600/10 blur-[180px]" />
+            <div className="absolute left-1/2 top-1/2 z-[3] h-full w-full -translate-x-1/2 -translate-y-1/2 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none" />
+            
+            {/* Subtle Night Sky Sparkles */}
+            <div className="absolute inset-0 z-[4] overflow-hidden pointer-events-none">
+              {[...Array(40)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ 
+                    opacity: Math.random() * 0.3,
+                    x: `${Math.random() * 100}%`,
+                    y: `${Math.random() * 100}%`,
+                    scale: Math.random() * 0.5 + 0.5
+                  }}
+                  animate={{ 
+                    opacity: [0.1, 0.5, 0.1],
+                    scale: [1, 1.2, 1]
+                  }}
+                  transition={{ 
+                    duration: 4 + Math.random() * 6,
+                    repeat: Infinity,
+                    delay: Math.random() * 10
+                  }}
+                  className="absolute w-0.5 h-0.5 bg-white rounded-full"
+                />
+              ))}
+            </div>
+
+            <div className="hero-mobile-fade absolute inset-x-0 bottom-0 z-[5] h-[30%] md:hidden" />
           </div>
         </div>
 
@@ -336,31 +340,33 @@ export default function App() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.5 }}
-              className="flex flex-col md:flex-row items-center justify-center gap-6 w-full max-w-[320px] md:max-w-none mx-auto mb-14"
+              className="flex w-full max-w-[420px] flex-col items-stretch justify-center gap-4 md:max-w-none md:flex-row md:items-center md:gap-6 mx-auto mb-14"
             >
               <button
                 onClick={() => document.getElementById('waitlist')?.scrollIntoView({ behavior: 'smooth' })}
-                className="w-full md:w-auto h-20 px-10 bg-violet-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all shadow-2xl shadow-violet-500/20 flex items-center justify-center gap-3 group"
+                className="flex h-20 w-full items-center justify-center gap-3 rounded-2xl bg-violet-600 px-10 font-black uppercase tracking-widest text-white shadow-2xl shadow-violet-500/20 transition-all hover:bg-white hover:text-black md:w-auto group"
               >
                 {t.hero.cta}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
-              
-              <button className="w-full md:w-auto h-20 px-8 bg-white text-black hover:bg-violet-500 hover:text-white rounded-2xl font-black uppercase tracking-[0.2em] flex items-center justify-center gap-4 transition-all shadow-2xl shadow-white/10 group whitespace-nowrap">
-                <Apple className="w-7 h-7" />
-                <div className="text-left">
-                  <p className="text-[10px] opacity-70 leading-none mb-1">{t.hero.download.appStore.split(' ')[0]}</p>
-                  <p className="text-sm md:text-base leading-none">{t.hero.download.appStore.split(' ').slice(1).join(' ')}</p>
-                </div>
-              </button>
 
-              <button className="w-full md:w-auto h-20 px-8 bg-white text-black hover:bg-violet-500 hover:text-white rounded-2xl font-black uppercase tracking-[0.2em] flex items-center justify-center gap-4 transition-all shadow-2xl shadow-white/10 group whitespace-nowrap">
-                <PlayCircle className="w-7 h-7" />
-                <div className="text-left">
-                  <p className="text-[10px] opacity-70 leading-none mb-1">{t.hero.download.googlePlay.split(' ')[0]}</p>
-                  <p className="text-sm md:text-base leading-none">{t.hero.download.googlePlay.split(' ').slice(1).join(' ')}</p>
-                </div>
-              </button>
+              <div className="grid w-full grid-cols-2 gap-4 md:flex md:w-auto md:gap-6">
+                <button className="flex h-16 min-w-0 items-center justify-center gap-3 rounded-2xl bg-white px-4 text-black shadow-2xl shadow-white/10 transition-all hover:bg-violet-500 hover:text-white md:h-20 md:w-auto md:px-8 group">
+                  <Apple className="h-6 w-6 shrink-0 md:h-7 md:w-7" />
+                  <div className="min-w-0 text-left">
+                    <p className="mb-1 text-[9px] leading-none opacity-70 md:text-[10px]">{t.hero.download.appStore.split(' ')[0]}</p>
+                    <p className="whitespace-nowrap text-[11px] font-black uppercase leading-none tracking-[0.08em] md:text-base md:tracking-[0.2em]">{t.hero.download.appStore.split(' ').slice(1).join(' ')}</p>
+                  </div>
+                </button>
+
+                <button className="flex h-16 min-w-0 items-center justify-center gap-3 rounded-2xl bg-white px-4 text-black shadow-2xl shadow-white/10 transition-all hover:bg-violet-500 hover:text-white md:h-20 md:w-auto md:px-8 group">
+                  <PlayCircle className="h-6 w-6 shrink-0 md:h-7 md:w-7" />
+                  <div className="min-w-0 text-left">
+                    <p className="mb-1 text-[9px] leading-none opacity-70 md:text-[10px]">{t.hero.download.googlePlay.split(' ')[0]}</p>
+                    <p className="whitespace-nowrap text-[11px] font-black uppercase leading-none tracking-[0.08em] md:text-base md:tracking-[0.2em]">{t.hero.download.googlePlay.split(' ').slice(1).join(' ')}</p>
+                  </div>
+                </button>
+              </div>
             </motion.div>
           </div>
 
@@ -539,7 +545,7 @@ export default function App() {
       <div className="max-w-7xl mx-auto h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
       {/* Psychology Section - Refined Grid with Numbers */}
-      <section id="psychology" className="py-40 px-6 relative overflow-hidden">
+      <section id="psychology" className="py-20 px-6 relative overflow-hidden md:py-40">
         <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
         
         <div className="max-w-7xl mx-auto relative z-10">
@@ -648,7 +654,7 @@ export default function App() {
       <div className="max-w-7xl mx-auto h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
       {/* Ritual Section - New Cool Element */}
-      <section className="py-40 px-6 bg-[#050505] relative overflow-hidden">
+      <section className="py-20 px-6 bg-[#050505] relative overflow-hidden md:py-40">
         <div className="max-w-7xl mx-auto relative">
           {/* Floating Element in Ritual - Repositioned for better visibility */}
           <AnimatedWidgetShell className="absolute -top-20 left-1/2 z-50 -translate-x-1/2 md:-left-10 md:top-0 md:translate-x-0">
@@ -694,7 +700,7 @@ export default function App() {
       <div className="max-w-7xl mx-auto h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
       {/* Effects Section - Hardware Mixer Style */}
-      <section id="effects" className="py-40 px-6 bg-[#080808]">
+      <section id="effects" className="py-20 px-6 bg-[#080808] md:py-40">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-20 items-center">
             <div>
@@ -880,7 +886,7 @@ export default function App() {
       <div className="max-w-7xl mx-auto h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-20" />
 
       {/* Dedication Section - Luxury Split with Parents Image */}
-      <section className="py-40 px-6 bg-white text-black rounded-[5rem] mx-4 mb-4 relative overflow-hidden">
+      <section className="py-20 px-6 bg-white text-black rounded-[5rem] mx-4 mb-4 relative overflow-hidden md:py-40">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-32 items-center">
           <motion.div
             initial={{ opacity: 0, x: -30 }}

@@ -1662,7 +1662,7 @@ function DeviceHomePreview({
 export function HeroDeviceShowcase({ lang, experience }: HeroDeviceShowcaseProps) {
   return (
     <div className="relative z-10 flex flex-col items-center justify-center gap-20 md:flex-row md:gap-0">
-      <div className="relative z-20 h-[500px] w-[240px] -translate-x-[28%] overflow-hidden rounded-[3rem] border-[10px] border-[#1a1a1a] bg-[#0a0a0a] shadow-[0_80px_150px_-30px_rgba(0,0,0,0.8)] md:h-[580px] md:w-[280px] md:-translate-x-[40px] md:rotate-[-5deg]">
+      <div className="relative z-20 h-[540px] w-[272px] -translate-x-[22%] overflow-hidden rounded-[3rem] border-[8px] border-[#1a1a1a] bg-[#0a0a0a] shadow-[0_80px_150px_-30px_rgba(0,0,0,0.8)] md:h-[580px] md:w-[280px] md:-translate-x-[40px] md:rotate-[-5deg] md:border-[10px]">
         <DeviceHomePreview lang={lang} experience={experience} />
       </div>
 
@@ -1789,7 +1789,7 @@ export function LandingLibrarySection({
   const currentCount = experience.filteredStories.length;
 
   return (
-    <section id="stories" className="py-40 px-6">
+    <section id="stories" className="py-20 px-6 md:py-40">
       <div className="max-w-7xl mx-auto">
         <div className="relative mb-12 flex flex-col gap-10 md:mb-16 md:flex-row md:items-end md:justify-between">
           <div className="max-w-3xl">
