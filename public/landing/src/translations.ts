@@ -13,7 +13,7 @@ export const translations = {
     },
     hero: {
       title: 'Uspavajte maštu. Probudite mir.',
-      subtitle: 'Naučno utemeljeni zvučni pejzaži i bezvremenske priče koji pretvaraju odlazak u krevet u najljepši dio dana.',
+      subtitle: 'Bezvremenske dječije priče sa organskim i poznatim bosanskohercegovačkim naratorima, naučno utemeljeni zvučni pejzaži i zanimljivi kratki dokumentarci koji pretvaraju odlazak u krevet u najljepši dio dana.',
       cta: 'Istražite magiju',
       tagline: 'priprema, pozor, san.',
       badges: {
@@ -115,7 +115,7 @@ export const translations = {
       tagline: 'Najljepši put do mirnih snova za vašu porodicu.',
       navigation: 'Navigacija',
       social: 'Društvene mreže',
-      propertyOf: 'Vlasnistvo',
+      propertyOf: 'Vlasništvo',
       ecosystem: 'qla.dev ekosistem',
       privacy: 'Privatnost',
       terms: 'Uslovi',
@@ -135,7 +135,7 @@ export const translations = {
     },
     hero: {
       title: 'Lull the Imagination. Awaken Peace.',
-      subtitle: 'Scientifically-backed soundscapes and timeless stories that turn bedtime into the most beautiful part of the day.',
+      subtitle: 'Timeless children\'s stories with authentic and renowned Bosnian-Herzegovinian narrators, scientifically crafted soundscapes, and engaging short documentaries that turn bedtime into the most beautiful part of the day.',
       cta: 'Explore the Magic',
       tagline: 'ready, set, sleep.',
       badges: {

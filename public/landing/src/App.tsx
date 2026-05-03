@@ -27,7 +27,8 @@ import {
   CheckCircle2,
   ArrowRight,
   Mail,
-  Users
+  Users,
+  X
 } from 'lucide-react';
 import { translations, Language } from './translations';
 import {
@@ -81,9 +82,53 @@ function AnimatedWidgetShell({ children, className = '', strength = 1 }: Animate
 
 const brandLogoSrc = `${import.meta.env.BASE_URL}logo.png`;
 const qlaLogoSrc = 'https://deklarant.ai/build/images/logo-qla-dark.png';
+const dedicationImageSrc = `${import.meta.env.BASE_URL}img/snovi1.jpg`;
 
 function BrandLogo({ className = '' }: { className?: string }) {
   return <img src={brandLogoSrc} alt="snovi.fm" className={className} />;
+}
+
+type WaitlistCopy = (typeof translations)['bs']['waitlist'];
+
+function WaitlistPanel({
+  copy,
+  className = '',
+}: {
+  copy: WaitlistCopy;
+  className?: string;
+}) {
+  return (
+    <div className={`glass relative overflow-hidden rounded-[3rem] border border-white/10 p-8 text-center shadow-4xl md:rounded-[4rem] md:p-20 ${className}`}>
+      <div className="absolute right-0 top-0 h-64 w-64 translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-500/10 blur-[100px]" />
+      <div className="absolute bottom-0 left-0 h-64 w-64 -translate-x-1/2 translate-y-1/2 rounded-full bg-indigo-500/10 blur-[100px]" />
+
+      <div className="relative z-10">
+        <motion.div
+          animate={{ rotate: [0, 10, 0] }}
+          transition={{ duration: 5, repeat: Infinity }}
+          className="mx-auto mb-10 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-violet-500 to-indigo-600 shadow-2xl shadow-violet-500/20"
+        >
+          <Mail className="h-10 w-10 text-white" />
+        </motion.div>
+
+        <h2 className="mb-6 text-4xl font-serif font-bold tracking-tight md:text-6xl">{copy.title}</h2>
+        <p className="mx-auto mb-12 max-w-xl text-xl leading-relaxed text-slate-400">
+          {copy.subtitle}
+        </p>
+
+        <form className="mx-auto flex max-w-2xl flex-col gap-4 md:flex-row" onSubmit={(event) => event.preventDefault()}>
+          <input
+            type="email"
+            placeholder={copy.placeholder}
+            className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-8 py-5 text-lg transition-all focus:border-violet-500 focus:outline-none"
+          />
+          <button className="rounded-2xl bg-white px-10 py-5 font-black uppercase tracking-widest text-black shadow-xl transition-all hover:bg-violet-500 hover:text-white">
+            {copy.button}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
 }
 
 export default function App() {
@@ -97,6 +142,34 @@ export default function App() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (!landingExperience.isWaitlistModalOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [landingExperience.isWaitlistModalOpen]);
+
+  useEffect(() => {
+    if (!landingExperience.isWaitlistModalOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        landingExperience.closeWaitlistModal();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [landingExperience.closeWaitlistModal, landingExperience.isWaitlistModalOpen]);
 
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -456,37 +529,9 @@ export default function App() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="glass p-12 md:p-20 rounded-[4rem] border-white/10 shadow-4xl text-center relative overflow-hidden"
+            className="relative"
           >
-            {/* Decorative Elements */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-violet-500/10 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/10 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2" />
-            
-            <div className="relative z-10">
-              <motion.div 
-                animate={{ rotate: [0, 10, 0] }}
-                transition={{ duration: 5, repeat: Infinity }}
-                className="w-20 h-20 rounded-3xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center mx-auto mb-10 shadow-2xl shadow-violet-500/20"
-              >
-                <Mail className="text-white w-10 h-10" />
-              </motion.div>
-              
-              <h2 className="text-4xl md:text-6xl font-serif font-bold mb-6 tracking-tight">{t.waitlist.title}</h2>
-              <p className="text-xl text-slate-400 mb-12 max-w-xl mx-auto leading-relaxed">
-                {t.waitlist.subtitle}
-              </p>
-              
-              <form className="flex flex-col md:flex-row gap-4 max-w-2xl mx-auto" onSubmit={(e) => e.preventDefault()}>
-                <input 
-                  type="email" 
-                  placeholder={t.waitlist.placeholder}
-                  className="flex-1 px-8 py-5 rounded-2xl bg-white/5 border border-white/10 focus:border-violet-500 focus:outline-none transition-all text-lg"
-                />
-                <button className="px-10 py-5 bg-white text-black rounded-2xl font-black uppercase tracking-widest hover:bg-violet-500 hover:text-white transition-all shadow-xl">
-                  {t.waitlist.button}
-                </button>
-              </form>
-            </div>
+            <WaitlistPanel copy={t.waitlist} />
           </motion.div>
         </div>
       </section>
@@ -872,7 +917,7 @@ export default function App() {
           >
             <div className="relative rounded-[4rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.2)]">
               <img 
-                src="https://picsum.photos/seed/parents-reading/1200/1600" 
+                src={dedicationImageSrc}
                 alt="Parents reading to child" 
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-1000"
                 referrerPolicy="no-referrer"
@@ -976,6 +1021,31 @@ export default function App() {
           </div>
         </div>
       </footer>
+      {landingExperience.isWaitlistModalOpen ? (
+        <div
+          className="fixed inset-0 z-[160] flex items-center justify-center p-4 md:p-6"
+          onClick={landingExperience.closeWaitlistModal}
+        >
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+          <motion.div
+            initial={{ opacity: 0, y: 24, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+            className="relative z-10 w-full max-w-4xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={landingExperience.closeWaitlistModal}
+              className="absolute right-4 top-4 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-black/35 text-slate-300 transition hover:border-violet-500/40 hover:text-white"
+              aria-label={lang === 'bs' ? 'Zatvori' : 'Close'}
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <WaitlistPanel copy={t.waitlist} className="p-8 pt-12 md:p-16 md:pt-20" />
+          </motion.div>
+        </div>
+      ) : null}
       <FixedMiniPlayerBar lang={lang} experience={landingExperience} />
     </div>
   );

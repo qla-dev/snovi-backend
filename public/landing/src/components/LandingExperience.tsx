@@ -136,11 +136,11 @@ const UI_COPY = {
   bs: {
     all: 'SVE',
     favorites: 'OMILJENO',
-    searchPlaceholder: 'Pretrazi naslove i naratore',
-    loading: 'Ucitavanje biblioteke...',
+    searchPlaceholder: 'Pretraži naslove i naratore',
+    loading: 'Učitavanje biblioteke...',
     loadFailed: 'Biblioteka trenutno nije dostupna.',
-    empty: 'Nema pronadjenih rezultata za odabrane filtere.',
-    deviceHomeKicker: 'VECERAS U SNOVIMA',
+    empty: 'Nema pronađenih rezultata za odabrane filtere.',
+    deviceHomeKicker: 'VEČERAS U SNOVIMA',
     deviceLibraryTitle: 'Biblioteka SNOVA',
     deviceLibraryHint: 'Filteri i kartice koriste iste podatke kao frontend.',
     deviceQueue: 'Brzi izbor',
@@ -148,7 +148,7 @@ const UI_COPY = {
     selected: 'U PLAYERU',
     previewResults: 'rezultata',
     resetFilters: 'Resetuj filtere',
-    selectedStory: 'Odabrana prica',
+    selectedStory: 'Odabrana priča',
     searchLabel: 'Pretraga',
     filterLabel: 'Filter biblioteke',
     noAudio: 'Bez audio fajla',
@@ -176,6 +176,46 @@ const UI_COPY = {
     openLibrary: 'Library',
   },
 } as const;
+
+const PRIMARY_STORY_SEARCH_KEY = 'cvrcak i mrav';
+
+function normalizeComparableText(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/gi, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isPrimaryStory(story: Story | null | undefined) {
+  if (!story) {
+    return false;
+  }
+
+  return normalizeComparableText(`${story.title} ${story.slug}`).includes(PRIMARY_STORY_SEARCH_KEY);
+}
+
+function prioritizeStories<T extends Story>(stories: T[]) {
+  const primaryStories: T[] = [];
+  const remainingStories: T[] = [];
+
+  stories.forEach((story) => {
+    if (isPrimaryStory(story)) {
+      primaryStories.push(story);
+      return;
+    }
+
+    remainingStories.push(story);
+  });
+
+  return [...primaryStories, ...remainingStories];
+}
+
+function isStoryPlayable(story: Story | null | undefined) {
+  return Boolean(story?.sound) && isPrimaryStory(story);
+}
 
 function uniqueStrings(values: Array<string | null | undefined>) {
   return Array.from(new Set(values.filter((value): value is string => Boolean(value))));
@@ -436,7 +476,7 @@ async function loadLibraryPayload(signal?: AbortSignal): Promise<LibraryFetchPay
         subcategories: subcategories
           .map(normalizeSubcategory)
           .filter((item): item is Subcategory => item !== null),
-        stories: stories.map(normalizeStory),
+        stories: prioritizeStories(stories.map(normalizeStory)),
       };
     } catch (error) {
       lastError = error;
@@ -465,6 +505,7 @@ export function useLandingExperience() {
   const [subTab, setSubTab] = useState<SubTabId>(ALL_SUB_TAB_ID);
   const [search, setSearch] = useState('');
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
+  const [isWaitlistModalOpen, setIsWaitlistModalOpen] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
@@ -569,15 +610,13 @@ export function useLandingExperience() {
   }, [subcategories]);
 
   const filteredStories = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
+    const normalizedSearch = normalizeComparableText(search.trim());
     const searchMatches = (story: Story) => {
       if (!normalizedSearch) {
         return true;
       }
 
-      return [story.title, story.narrator, story.categoryLabel, story.subcategoryLabel]
-        .join(' ')
-        .toLowerCase()
+      return normalizeComparableText([story.title, story.narrator, story.categoryLabel, story.subcategoryLabel].join(' '))
         .includes(normalizedSearch);
     };
 
@@ -591,7 +630,7 @@ export function useLandingExperience() {
       visibleStories = visibleStories.filter((story) => story.subcategoryId === subTab);
     }
 
-    return visibleStories.filter(searchMatches);
+    return prioritizeStories(visibleStories.filter(searchMatches));
   }, [mainTab, search, stories, subTab]);
 
   const currentSubcategories = useMemo(() => {
@@ -778,7 +817,7 @@ export function useLandingExperience() {
       return;
     }
 
-    const initialStory = stories.find((story) => story.sound) ?? stories[0];
+    const initialStory = stories.find((story) => isStoryPlayable(story)) ?? stories.find((story) => story.sound) ?? stories[0];
     setSelectedStoryId(initialStory.id);
   }, [selectedStoryId, stories]);
 
@@ -923,20 +962,33 @@ export function useLandingExperience() {
     void syncAuxiliaryPlayback(Boolean(audioElement && !audioElement.paused), selectedStoryRef.current, effectLevels);
   }, [audioElement, effectLevels, syncAuxiliaryPlayback]);
 
+  const closeWaitlistModal = useCallback(() => {
+    setIsWaitlistModalOpen(false);
+  }, []);
+
   const setAudioRef = useCallback((node: HTMLAudioElement | null) => {
     setAudioElement(node);
   }, []);
 
   const selectStory = useCallback(
     (story: Story) => {
-      pendingResumeRef.current = isPlaying;
+      pendingResumeRef.current = isPlaying && isStoryPlayable(story);
       setSelectedStoryId(story.id);
     },
     [isPlaying],
   );
 
   const togglePlayPause = useCallback(async () => {
-    if (!audioElement || !selectedStory?.sound) {
+    if (!audioElement || !selectedStory) {
+      return;
+    }
+
+    if (!selectedStory.sound) {
+      return;
+    }
+
+    if (!isStoryPlayable(selectedStory)) {
+      setIsWaitlistModalOpen(true);
       return;
     }
 
@@ -954,12 +1006,21 @@ export function useLandingExperience() {
     }
 
     audioElement.pause();
-  }, [audioElement, selectedStory?.sound]);
+  }, [audioElement, selectedStory]);
 
   const toggleStoryPlayback = useCallback(
     async (story: Story) => {
       if (selectedStory?.id === story.id) {
         await togglePlayPause();
+        return;
+      }
+
+      if (!isStoryPlayable(story)) {
+        pendingResumeRef.current = false;
+        setSelectedStoryId(story.id);
+        if (story.sound) {
+          setIsWaitlistModalOpen(true);
+        }
         return;
       }
 
@@ -1075,6 +1136,8 @@ export function useLandingExperience() {
     hasStoryMusic: Boolean(selectedStory?.musicFile),
     isAudioLoading,
     isPlaying,
+    isWaitlistModalOpen,
+    closeWaitlistModal,
   };
 }
 
@@ -1374,7 +1437,7 @@ function DeviceLibraryPreview({
           <div>
             <p className="text-[9px] font-black uppercase tracking-[0.3em] text-violet-400">{copy.deviceLibraryTitle}</p>
             <h4 className="mt-2 text-2xl font-serif font-bold text-white">
-              {lang === 'bs' ? 'Svijet Maste' : 'World of Imagination'}
+              {lang === 'bs' ? 'Svijet Mašte' : 'World of Imagination'}
             </h4>
           </div>
           <div className="rounded-2xl border border-white/10 bg-black/35 px-3 py-2 text-[9px] font-black uppercase tracking-[0.18em] text-emerald-300">
