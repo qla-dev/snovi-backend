@@ -20,6 +20,7 @@
                     <th>Objava</th>
                     <th>Status</th>
                     <th>Efekti</th>
+                    <th>Veličina slike</th>
                     <th class="text-end" style="width:180px;">Akcije</th>
                 </tr>
             </thead>
@@ -71,6 +72,9 @@
                             @php $levels = collect($story->effects ?? [])->filter(fn($v) => $v > 0); @endphp
                             {{ $levels->count() ? $levels->map(fn($v, $k) => "$k:$v")->implode(', ') : '-' }}
                         </td>
+                        <td data-order="{{ $story->image_size_bytes ?? 0 }}">
+                            {{ $story->image_size_label ?? '-' }}
+                        </td>
                         <td class="text-end">
                             <div class="d-inline-flex gap-2 align-items-center justify-content-end">
                                 <a href="{{ route('admin.stories.edit', $story) }}" class="btn btn-sm btn-primary">Uredi</a>
@@ -82,7 +86,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="10" class="text-center text-muted">Nema unosa</td></tr>
+                    <tr><td colspan="11" class="text-center text-muted">Nema unosa</td></tr>
                 @endforelse
             </tbody>
         </table>
