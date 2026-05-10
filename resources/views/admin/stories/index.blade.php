@@ -20,7 +20,7 @@
                     <th>Objava</th>
                     <th>Status</th>
                     <th>Efekti</th>
-                    <th>Veličina slike</th>
+                    <th>Vel. slike</th>
                     <th class="text-end" style="width:180px;">Akcije</th>
                 </tr>
             </thead>
