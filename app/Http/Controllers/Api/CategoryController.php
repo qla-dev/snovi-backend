@@ -15,6 +15,8 @@ class CategoryController extends Controller
      */
     public function index(Request $request)
     {
+            $limit = min(max($request->integer('limit', 10), 1), 1000);
+            $pageNo = max($request->integer('page_no', 1), 1);
             $preferredCategoryIds = LibraryPreferenceOrder::preferredCategoryIds($request);
             $preferredSubcategoryIds = LibraryPreferenceOrder::preferredSubcategoryIds($request);
 
@@ -29,7 +31,7 @@ class CategoryController extends Controller
             LibraryPreferenceOrder::applyIdPriority($query, 'categories.id', $preferredCategoryIds);
             LibraryPreferenceOrder::applyNullableSort($query, 'categories.sort', 'categories.label');
 
-            $categories = $query->get();
+            $categories = $query->forPage($pageNo, $limit)->get();
 
             return CategoryResource::collection($categories);
     }
