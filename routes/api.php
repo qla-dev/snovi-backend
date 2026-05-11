@@ -11,6 +11,7 @@ Route::get('/ping', fn () => [
     'timestamp' => now()->toIso8601String(),
 ]);
 
+Route::get('/categories/search', [CategoryController::class, 'search']);
 Route::apiResource('categories', CategoryController::class);
 Route::apiResource('music', MusicController::class);
 Route::apiResource('subcategories', SubcategoryController::class);

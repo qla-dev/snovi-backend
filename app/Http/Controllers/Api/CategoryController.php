@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
-use Illuminate\Http\Request;
 use App\Http\Resources\CategoryResource;
+use App\Models\Category;
 use App\Support\LibraryPreferenceOrder;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
@@ -15,25 +16,22 @@ class CategoryController extends Controller
      */
     public function index(Request $request)
     {
-            $limit = min(max($request->integer('limit', 10), 1), 1000);
-            $pageNo = max($request->integer('page_no', 1), 1);
-            $preferredCategoryIds = LibraryPreferenceOrder::preferredCategoryIds($request);
-            $preferredSubcategoryIds = LibraryPreferenceOrder::preferredSubcategoryIds($request);
+        $query = $this->categoryQuery($request);
+        $this->applySearch($query, $request->query('q'));
 
-            $query = Category::query()->with([
-                'subcategories' => function ($subcategories) use ($preferredSubcategoryIds) {
-                    $subcategories->reorder();
-                    LibraryPreferenceOrder::applyIdPriority($subcategories, 'subcategories.id', $preferredSubcategoryIds);
-                    LibraryPreferenceOrder::applyNullableSort($subcategories, 'subcategories.sort', 'subcategories.label');
-                },
-            ]);
+        $categories = $query
+            ->forPage($this->pageNo($request), $this->limit($request))
+            ->get();
 
-            LibraryPreferenceOrder::applyIdPriority($query, 'categories.id', $preferredCategoryIds);
-            LibraryPreferenceOrder::applyNullableSort($query, 'categories.sort', 'categories.label');
+        return CategoryResource::collection($categories);
+    }
 
-            $categories = $query->forPage($pageNo, $limit)->get();
-
-            return CategoryResource::collection($categories);
+    /**
+     * Search categories and their subcategories.
+     */
+    public function search(Request $request)
+    {
+        return $this->index($request);
     }
 
     /**
@@ -76,5 +74,55 @@ class CategoryController extends Controller
     public function destroy(Category $category)
     {
         abort(405);
+    }
+
+    private function categoryQuery(Request $request): Builder
+    {
+        $preferredCategoryIds = LibraryPreferenceOrder::preferredCategoryIds($request);
+        $preferredSubcategoryIds = LibraryPreferenceOrder::preferredSubcategoryIds($request);
+
+        $query = Category::query()->with([
+            'subcategories' => function ($subcategories) use ($preferredSubcategoryIds) {
+                $subcategories->reorder();
+                LibraryPreferenceOrder::applyIdPriority($subcategories, 'subcategories.id', $preferredSubcategoryIds);
+                LibraryPreferenceOrder::applyNullableSort($subcategories, 'subcategories.sort', 'subcategories.label');
+            },
+        ]);
+
+        LibraryPreferenceOrder::applyIdPriority($query, 'categories.id', $preferredCategoryIds);
+        LibraryPreferenceOrder::applyNullableSort($query, 'categories.sort', 'categories.label');
+
+        return $query;
+    }
+
+    private function applySearch(Builder $query, mixed $search): void
+    {
+        $term = trim((string) $search);
+
+        if ($term === '') {
+            return;
+        }
+
+        $query->where(function (Builder $categoryQuery) use ($term) {
+            $categoryQuery
+                ->where('categories.label', 'like', "%{$term}%")
+                ->orWhere('categories.slug', 'like', "%{$term}%")
+                ->orWhere('categories.description', 'like', "%{$term}%")
+                ->orWhereHas('subcategories', function (Builder $subcategoryQuery) use ($term) {
+                    $subcategoryQuery
+                        ->where('subcategories.label', 'like', "%{$term}%")
+                        ->orWhere('subcategories.slug', 'like', "%{$term}%");
+                });
+        });
+    }
+
+    private function limit(Request $request): int
+    {
+        return min(max($request->integer('limit', 10), 1), 1000);
+    }
+
+    private function pageNo(Request $request): int
+    {
+        return max($request->integer('page_no', 1), 1);
     }
 }
