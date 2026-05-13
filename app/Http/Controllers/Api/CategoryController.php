@@ -19,9 +19,7 @@ class CategoryController extends Controller
         $query = $this->categoryQuery($request);
         $this->applySearch($query, $request->query('q'));
 
-        $categories = $query
-            ->forPage($this->pageNo($request), $this->limit($request))
-            ->get();
+        $categories = $query->get();
 
         return CategoryResource::collection($categories);
     }
@@ -116,13 +114,4 @@ class CategoryController extends Controller
         });
     }
 
-    private function limit(Request $request): int
-    {
-        return min(max($request->integer('limit', 10), 1), 1000);
-    }
-
-    private function pageNo(Request $request): int
-    {
-        return max($request->integer('page_no', 1), 1);
-    }
 }

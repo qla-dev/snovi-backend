@@ -56,9 +56,9 @@ class StoryController extends Controller
             $query->where('locked', false);
         }
 
-        $limit = min(max($request->integer('limit', 100), 1), 1000);
-
-        $stories = $query->limit($limit)->get();
+        $stories = $query
+            ->forPage($this->pageNo($request), $this->limit($request))
+            ->get();
 
         return StoryResource::collection($stories);
     }
@@ -116,5 +116,15 @@ class StoryController extends Controller
     public function destroy(Story $story)
     {
         abort(405);
+    }
+
+    private function limit(Request $request): int
+    {
+        return min(max($request->integer('limit', 10), 1), 1000);
+    }
+
+    private function pageNo(Request $request): int
+    {
+        return max($request->integer('page_no', 1), 1);
     }
 }
