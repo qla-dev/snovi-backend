@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Story;
 use Illuminate\Http\Request;
 use App\Http\Resources\StoryResource;
+use Illuminate\Database\Eloquent\Builder;
 
 class StoryController extends Controller
 {
@@ -14,15 +15,15 @@ class StoryController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Story::with(['category', 'subcategory', 'music'])
-            ->orderByDesc('published_at')
-            ->orderByDesc('id');
+        $query = Story::with(['category', 'subcategory', 'music']);
+
+        $this->applySort($query, $request);
 
         if (!$request->boolean('include_dummy')) {
             $query->where('is_dummy', false);
         }
 
-        if ($search = $request->query('q')) {
+        if ($search = $request->input('q')) {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
                     ->orWhere('narrator', 'like', "%{$search}%")
@@ -30,7 +31,7 @@ class StoryController extends Controller
             });
         }
 
-        if ($category = $request->query('category')) {
+        if ($category = $request->input('category')) {
             $query->whereHas('category', fn ($q) => $q->where('slug', $category));
         }
 
@@ -38,7 +39,7 @@ class StoryController extends Controller
             $query->where('category_id', $categoryId);
         }
 
-        if ($subcategory = $request->query('subcategory')) {
+        if ($subcategory = $request->input('subcategory')) {
             $query->whereHas('subcategory', fn ($q) => $q->where('slug', $subcategory));
         }
 
@@ -68,16 +69,18 @@ class StoryController extends Controller
      */
     public function recentPublished(Request $request)
     {
-        $limit = min(max($request->integer('limit', 50), 1), 1000);
-        $stories = Story::with(['category', 'subcategory', 'music'])
+        $limit = $this->limit($request, 50);
+        $query = Story::with(['category', 'subcategory', 'music'])
             ->where('is_dummy', false)
             ->whereNotNull('image_url')
             ->where(function ($q) {
                 $q->whereNotNull('audio_url')
                     ->orWhereNotNull('audio_path');
-            })
-            ->orderByDesc('published_at')
-            ->orderByDesc('id')
+            });
+
+        $this->applySort($query, $request);
+
+        $stories = $query
             ->limit($limit)
             ->get();
 
@@ -118,13 +121,45 @@ class StoryController extends Controller
         abort(405);
     }
 
-    private function limit(Request $request): int
+    private function limit(Request $request, int $default = 10): int
     {
-        return min(max($request->integer('limit', 10), 1), 1000);
+        return min(max($request->integer('limit', $default), 1), 1000);
     }
 
     private function pageNo(Request $request): int
     {
         return max($request->integer('page_no', 1), 1);
+    }
+
+    private function applySort(Builder $query, Request $request): void
+    {
+        $sort = strtolower(trim((string) $request->input('sort', 'asc')));
+
+        if ($sort === 'desc') {
+            $this->applyPublishedSort($query, 'desc');
+
+            return;
+        }
+
+        if ($sort === 'abc') {
+            $this->applyAlphabeticalSort($query);
+
+            return;
+        }
+
+        $this->applyPublishedSort($query, 'asc');
+    }
+
+    private function applyPublishedSort(Builder $query, string $direction): void
+    {
+        $query->orderByRaw('CASE WHEN published_at IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('published_at', $direction)
+            ->orderBy('id', $direction);
+    }
+
+    private function applyAlphabeticalSort(Builder $query): void
+    {
+        $query->orderByRaw('LOWER(title) asc')
+            ->orderBy('id');
     }
 }
