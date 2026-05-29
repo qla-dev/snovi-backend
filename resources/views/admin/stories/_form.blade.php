@@ -74,6 +74,23 @@
                 </option>
             @endforeach
         </select>
+        <div class="mt-3">
+            <label class="form-label d-flex justify-content-between align-items-center">
+                <span>Nivo muzike</span>
+                <span class="text-muted small" id="music-level-value">{{ old('music_level', $story->music_level ?? 20) }}</span>
+            </label>
+            <input
+                type="range"
+                class="form-range"
+                min="0"
+                max="100"
+                step="1"
+                name="music_level"
+                value="{{ old('music_level', $story->music_level ?? 20) }}"
+                oninput="document.getElementById('music-level-value').innerText = this.value;"
+                style="accent-color:#8b5cf6;"
+            >
+        </div>
     </div>
 </div>
 
@@ -176,6 +193,8 @@
   const audioUploadInput = document.querySelector('input[name="audio_upload"]');
   const audioPreview = document.getElementById('story-audio-preview');
   const musicSelect = document.querySelector('select[name="music_id"]');
+  const musicLevelInput = document.querySelector('input[name="music_level"]');
+  const musicLevelValue = document.getElementById('music-level-value');
   const musicPreviewWrap = document.getElementById('story-music-preview-wrap');
   const musicPreview = document.getElementById('story-music-preview');
   const categorySelect = document.getElementById('category-select');
@@ -241,7 +260,7 @@
     if (!musicPreview || !musicPreviewWrap) return;
     if (src) {
       musicPreview.src = src;
-      musicPreview.volume = 0.2;
+      musicPreview.volume = currentMusicPreviewVolume();
       musicPreview.style.display = 'block';
       musicPreviewWrap.style.display = 'block';
       musicPreview.load();
@@ -302,6 +321,20 @@
     const selectedOption = musicSelect?.selectedOptions?.[0];
     const src = selectedOption?.dataset?.file?.trim?.() || '';
     showMusicPreview(src);
+  }
+
+  function currentMusicPreviewVolume() {
+    const level = Number(musicLevelInput?.value || 0);
+    return Math.max(0, Math.min(1, level / 100));
+  }
+
+  function syncMusicLevel() {
+    if (musicLevelValue && musicLevelInput) {
+      musicLevelValue.innerText = musicLevelInput.value;
+    }
+    if (musicPreview) {
+      musicPreview.volume = currentMusicPreviewVolume();
+    }
   }
 
   function startProgress() {
@@ -435,6 +468,11 @@
   if (musicSelect) {
     musicSelect.addEventListener('change', syncMusicPreview);
     syncMusicPreview();
+  }
+
+  if (musicLevelInput) {
+    musicLevelInput.addEventListener('input', syncMusicLevel);
+    syncMusicLevel();
   }
 })();
 </script>

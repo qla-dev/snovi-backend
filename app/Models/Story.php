@@ -22,6 +22,7 @@ class Story extends Model
         'category_id',
         'subcategory_id',
         'music_id',
+        'music_level',
         'is_dummy',
         'locked',
         'is_favorite',
@@ -35,6 +36,7 @@ class Story extends Model
     protected $casts = [
         'effects' => 'array',
         'meta' => 'array',
+        'music_level' => 'integer',
         'is_dummy' => 'boolean',
         'locked' => 'boolean',
         'is_favorite' => 'boolean',

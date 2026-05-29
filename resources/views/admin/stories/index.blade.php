@@ -40,7 +40,7 @@
                         <td>
                             @if($story->music)
                                 <div>{{ $story->music->name }}</div>
-                                <div class="text-muted small">#{{ $story->music->id }}</div>
+                                <div class="text-muted small">#{{ $story->music->id }} | nivo {{ $story->music_level ?? 0 }}</div>
                             @else
                                 <span class="text-muted">-</span>
                             @endif

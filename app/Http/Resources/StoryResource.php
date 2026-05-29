@@ -30,6 +30,10 @@ class StoryResource extends JsonResource
             }
         }
 
+        $musicLevel = (int) ($this->music_level ?? 20);
+        $effects = $this->effects ?? [];
+        $effects['music'] = (int) round($musicLevel / 10);
+
         return [
             'id' => $this->slug,
             'slug' => $this->slug,
@@ -46,12 +50,13 @@ class StoryResource extends JsonResource
             'subcategory' => $this->subcategory?->label,
             'subcategory_slug' => $this->subcategory?->slug,
             'music_id' => $this->music_id,
+            'music_level' => $musicLevel,
             'music' => $this->whenLoaded('music', fn () => new MusicResource($this->music)),
             'is_dummy' => $this->is_dummy,
             'locked' => $this->locked,
             'favorite' => $this->is_favorite,
             'sound' => $audio,
-            'effects' => $this->effects ?? [],
+            'effects' => $effects,
             'meta' => $this->meta ?? [],
             'published_at' => optional($this->published_at)->toIso8601String(),
         ];

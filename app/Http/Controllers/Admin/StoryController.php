@@ -51,6 +51,7 @@ class StoryController extends Controller
         return view('admin.stories.create', [
             'story' => new Story([
                 'effects' => array_fill_keys($this->effectKeys, 0),
+                'music_level' => 20,
             ]),
             'categories' => $categories,
             'musicItems' => $musicItems,
@@ -199,6 +200,7 @@ class StoryController extends Controller
             'category_id' => ['required', 'exists:categories,id'],
             'subcategory_id' => ['nullable', 'exists:subcategories,id'],
             'music_id' => ['nullable', 'exists:music,id'],
+            'music_level' => ['nullable', 'integer', 'min:0', 'max:100'],
             'is_dummy' => ['sometimes', 'boolean'],
             'locked' => ['sometimes', 'boolean'],
             'is_favorite' => ['sometimes', 'boolean'],
@@ -208,6 +210,8 @@ class StoryController extends Controller
             'image_upload' => ['nullable', 'image', 'max:102400'],
             'audio_upload' => ['nullable', 'file', 'max:102400'],
         ]);
+
+        $validated['music_level'] = (int) ($validated['music_level'] ?? 20);
 
         return $validated;
     }
