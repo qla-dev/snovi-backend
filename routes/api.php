@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\MusicController;
+use App\Http\Controllers\Api\PushNotificationController;
+use App\Http\Controllers\Api\PushTokenController;
 use App\Http\Controllers\Api\SubcategoryController;
 use App\Http\Controllers\Api\StoryController;
 
@@ -11,6 +13,8 @@ Route::get('/ping', fn () => [
     'timestamp' => now()->toIso8601String(),
 ]);
 
+Route::get('/notifications/default', [PushNotificationController::class, 'default']);
+Route::post('/push-tokens', [PushTokenController::class, 'store']);
 Route::get('/categories/search', [CategoryController::class, 'search']);
 Route::apiResource('categories', CategoryController::class);
 Route::apiResource('music', MusicController::class);

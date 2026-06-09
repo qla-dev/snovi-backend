@@ -223,6 +223,7 @@
                 <a class="nav-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}" href="{{ route('admin.categories.index') }}">Kategorije</a>
                 <a class="nav-link {{ request()->routeIs('admin.subcategories.*') ? 'active' : '' }}" href="{{ route('admin.subcategories.index') }}">Potkategorije</a>
                 <a class="nav-link {{ request()->routeIs('admin.music.*') ? 'active' : '' }}" href="{{ route('admin.music.index') }}">Muzika</a>
+                <a class="nav-link {{ request()->routeIs('admin.notifications.*') ? 'active' : '' }}" href="{{ route('admin.notifications.index') }}">Notifikacije</a>
             </div>
             <form action="{{ route('logout') }}" method="POST" class="d-flex">
                 @csrf

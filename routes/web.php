@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\MusicController;
+use App\Http\Controllers\Admin\PushNotificationController;
 use App\Http\Controllers\Admin\SubcategoryController;
 use App\Http\Controllers\Admin\StoryController;
 use App\Http\Controllers\Auth\LoginController;
@@ -18,4 +19,6 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     Route::resource('music', MusicController::class);
     Route::resource('subcategories', SubcategoryController::class);
     Route::resource('stories', StoryController::class);
+    Route::get('notifications', [PushNotificationController::class, 'index'])->name('notifications.index');
+    Route::post('notifications', [PushNotificationController::class, 'store'])->name('notifications.store');
 });
