@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\GiftCodeController;
 use App\Http\Controllers\Api\MusicController;
 use App\Http\Controllers\Api\PushNotificationController;
 use App\Http\Controllers\Api\PushTokenController;
@@ -15,6 +16,7 @@ Route::get('/ping', fn () => [
 
 Route::get('/notifications/default', [PushNotificationController::class, 'default']);
 Route::post('/push-tokens', [PushTokenController::class, 'store']);
+Route::post('/gift-codes/redeem', [GiftCodeController::class, 'redeem']);
 Route::get('/categories/search', [CategoryController::class, 'search']);
 Route::apiResource('categories', CategoryController::class);
 Route::apiResource('music', MusicController::class);
