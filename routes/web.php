@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\GiftCodeController;
 use App\Http\Controllers\Admin\MusicController;
 use App\Http\Controllers\Admin\PushNotificationController;
 use App\Http\Controllers\Admin\SubcategoryController;
@@ -21,4 +22,7 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     Route::resource('stories', StoryController::class);
     Route::get('notifications', [PushNotificationController::class, 'index'])->name('notifications.index');
     Route::post('notifications', [PushNotificationController::class, 'store'])->name('notifications.store');
+    Route::get('gift-codes', [GiftCodeController::class, 'index'])->name('gift-codes.index');
+    Route::post('gift-codes', [GiftCodeController::class, 'store'])->name('gift-codes.store');
+    Route::post('gift-codes/{giftCode}/expire', [GiftCodeController::class, 'expire'])->name('gift-codes.expire');
 });

@@ -1,0 +1,107 @@
+@extends('layouts.admin')
+
+@section('content')
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Gift kodovi</h4>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#giftCodeModal">Dodaj kod</button>
+</div>
+
+<div class="card p-3">
+    <h6 class="text-light mb-3">Svi gift kodovi</h6>
+    <div class="table-responsive">
+        <table class="table align-middle datatable" data-default-order-column="0" data-default-order-dir="desc">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Kod</th>
+                    <th>Status</th>
+                    <th>Datum koristenja</th>
+                    <th class="text-end" style="width:180px;">Akcije</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($giftCodes as $giftCode)
+                    <tr>
+                        <td class="fw-semibold">#{{ $giftCode->id }}</td>
+                        <td class="fw-semibold">{{ $giftCode->code }}</td>
+                        <td>
+                            @if($giftCode->used)
+                                <span class="badge bg-danger">Iskoristen</span>
+                            @else
+                                <span class="badge bg-success">Aktivan</span>
+                            @endif
+                        </td>
+                        <td>{{ optional($giftCode->used_date)->format('d.m.Y H:i') ?? '-' }}</td>
+                        <td class="text-end">
+                            @if(!$giftCode->used)
+                                <form action="{{ route('admin.gift-codes.expire', $giftCode) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Oznaciti kod kao iskoristen?')">
+                                        Expire
+                                    </button>
+                                </form>
+                            @else
+                                <span class="text-muted small">Nema akcija</span>
+                            @endif
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="5" class="text-center text-muted">Nema unosa</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="giftCodeModal" tabindex="-1" aria-labelledby="giftCodeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background:#0b1220; color:#e5e7eb;">
+      <div class="modal-header border-0">
+        <h5 class="modal-title" id="giftCodeModalLabel">Dodaj gift kod</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="gift-code-create-form" action="{{ route('admin.gift-codes.store') }}" method="POST" class="vstack gap-3">
+            @csrf
+            <div>
+                <label class="form-label" for="gift-code-input">Kod</label>
+                <input
+                    id="gift-code-input"
+                    type="text"
+                    name="code"
+                    class="form-control"
+                    value="{{ old('code') }}"
+                    inputmode="numeric"
+                    autocomplete="off"
+                    pattern="[0-9]{12}"
+                    minlength="12"
+                    maxlength="12"
+                    placeholder="123456789012"
+                    required
+                >
+                <div class="text-muted small mt-1">Kod mora imati tacno 12 cifara.</div>
+            </div>
+        </form>
+      </div>
+      <div class="modal-footer border-0 d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Nazad</button>
+        <button type="submit" form="gift-code-create-form" class="btn btn-primary">Spasi</button>
+      </div>
+    </div>
+  </div>
+</div>
+@endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const input = document.getElementById('gift-code-input');
+
+        if (!input) return;
+
+        input.addEventListener('input', () => {
+            input.value = input.value.replace(/\D/g, '').slice(0, 12);
+        });
+    });
+</script>
+@endpush

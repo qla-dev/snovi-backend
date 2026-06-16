@@ -12,16 +12,10 @@ class GiftCodeController extends Controller
     public function redeem(Request $request)
     {
         $validated = $request->validate([
-            'code' => ['required', 'string', 'max:190'],
+            'code' => ['required', 'digits:12'],
         ]);
 
         $codeValue = trim($validated['code']);
-
-        if ($codeValue === '') {
-            return response()->json([
-                'message' => 'Gift kod je obavezan.',
-            ], 422);
-        }
 
         $giftCode = DB::transaction(function () use ($codeValue) {
             $giftCode = GiftCode::query()
