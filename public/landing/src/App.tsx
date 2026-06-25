@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { 
   Play, 
@@ -28,6 +28,7 @@ import {
   ArrowRight,
   Mail,
   Users,
+  Shield,
   X
 } from 'lucide-react';
 import { translations, Language } from './translations';
@@ -83,6 +84,101 @@ function AnimatedWidgetShell({ children, className = '', strength = 1 }: Animate
 const brandLogoSrc = `${import.meta.env.BASE_URL}logo.png`;
 const qlaLogoSrc = 'https://deklarant.ai/build/images/logo-qla-dark.png';
 const dedicationImageSrc = `${import.meta.env.BASE_URL}img/snovi1.jpg`;
+const SITE_ORIGIN = 'https://snovi.fm';
+const OG_IMAGE_PATH = '/img/snovi34.jpg';
+
+type Page = 'app' | 'privacy' | 'terms' | 'cookies';
+
+type PageMeta = {
+  title: string;
+  description: string;
+  keywords: string;
+  path: string;
+};
+
+const PAGE_META: Record<Page, PageMeta> = {
+  app: {
+    title: 'snovi.fm - Priprema. Pozor. San.',
+    description: 'Uspavajte maštu. Probudite mir.',
+    keywords: 'snovi.fm, snovi, priče za djecu, uspavljivanje, ambijenti, zvučni pejzaži',
+    path: '/',
+  },
+  privacy: {
+    title: 'snovi.fm - Politika privatnosti',
+    description: 'Pročitajte kako snovi.fm pristupa privatnosti, audio sadržaju, email listi čekanja i povezanim servisima.',
+    keywords: 'snovi.fm privatnost, politika privatnosti, podaci, aplikacija, waitlist',
+    path: '/privacy',
+  },
+  terms: {
+    title: 'snovi.fm - Uslovi korištenja',
+    description: 'Uslovi korištenja za snovi.fm web, priče, ambijente, biblioteku i aplikaciju.',
+    keywords: 'snovi.fm uslovi, terms, pravila, aplikacija, biblioteka',
+    path: '/terms',
+  },
+  cookies: {
+    title: 'snovi.fm - Politika kolačića',
+    description: 'Informacije o kolačićima i sličnim tehnologijama koje snovi.fm web koristi za stabilnost i osnovne postavke.',
+    keywords: 'snovi.fm kolačići, cookies, web tehnologije, privatnost',
+    path: '/cookies',
+  },
+};
+
+function normalizePath(pathname: string) {
+  const normalized = pathname.replace(/\/+$/, '');
+  return normalized || '/';
+}
+
+function getPageFromPath(pathname = window.location.pathname): Page {
+  const path = normalizePath(pathname);
+
+  if (path === '/privacy') {
+    return 'privacy';
+  }
+
+  if (path === '/terms') {
+    return 'terms';
+  }
+
+  if (path === '/cookies') {
+    return 'cookies';
+  }
+
+  return 'app';
+}
+
+function getPathForPage(page: Page) {
+  if (page === 'app') {
+    return '/';
+  }
+
+  return `/${page}`;
+}
+
+function upsertMeta(selector: string, attributes: Record<string, string>) {
+  let element = document.head.querySelector<HTMLMetaElement>(selector);
+
+  if (!element) {
+    element = document.createElement('meta');
+    document.head.appendChild(element);
+  }
+
+  Object.entries(attributes).forEach(([name, value]) => {
+    element?.setAttribute(name, value);
+  });
+}
+
+function upsertLink(selector: string, attributes: Record<string, string>) {
+  let element = document.head.querySelector<HTMLLinkElement>(selector);
+
+  if (!element) {
+    element = document.createElement('link');
+    document.head.appendChild(element);
+  }
+
+  Object.entries(attributes).forEach(([name, value]) => {
+    element?.setAttribute(name, value);
+  });
+}
 
 function BrandLogo({ className = '' }: { className?: string }) {
   return <img src={brandLogoSrc} alt="snovi.fm" className={className} />;
@@ -131,11 +227,151 @@ function WaitlistPanel({
   );
 }
 
+function LegalPage({
+  page,
+  lang,
+  onNavigate,
+}: {
+  page: Exclude<Page, 'app'>;
+  lang: Language;
+  onNavigate: (page: Page) => void;
+}) {
+  const t = translations[lang];
+  const content = t.legal[page];
+
+  return (
+    <div className="min-h-screen bg-[#050505] font-sans text-white selection:bg-violet-500/30">
+      <nav className="fixed inset-x-0 top-0 z-[100] flex items-center justify-between border-b border-white/5 px-6 glass">
+        <button className="flex items-center" type="button" onClick={() => onNavigate('app')} aria-label="snovi.fm">
+          <BrandLogo className="h-20 w-auto max-w-[320px] md:h-24 md:max-w-[380px]" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onNavigate('app')}
+          className="flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-xs font-black uppercase tracking-widest text-black transition-all hover:bg-violet-500 hover:text-white"
+        >
+          <ArrowRight className="h-4 w-4 rotate-180" />
+          {t.legal.back}
+        </button>
+      </nav>
+
+      <main className="px-6 pb-24 pt-28 md:pt-32">
+        <section className="mx-auto max-w-4xl">
+          <div className="mb-8 flex items-center justify-between gap-6">
+            <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-violet-500/15 text-violet-300 ring-1 ring-white/10">
+              <Shield className="h-8 w-8" />
+            </div>
+            <div className="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent" />
+          </div>
+
+          <p className="mb-5 text-[11px] font-black uppercase tracking-[0.5em] text-violet-400">{content.kicker}</p>
+          <h1 className="mb-8 font-serif text-5xl font-bold leading-[0.95] tracking-tight text-white md:text-7xl">
+            {content.title}
+          </h1>
+          <p className="mb-12 text-xl leading-relaxed text-slate-400 md:text-2xl">{content.intro}</p>
+
+          <div className="space-y-5">
+            {content.items.map((item) => (
+              <article key={item} className="glass flex gap-5 rounded-[2rem] border border-white/10 p-6">
+                <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-violet-400 shadow-[0_0_18px_rgba(167,139,250,0.7)]" />
+                <p className="text-base leading-relaxed text-slate-300 md:text-lg">{item}</p>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-16 flex flex-wrap gap-6 border-t border-white/10 pt-8 text-[10px] font-black uppercase tracking-widest text-slate-500">
+            <a
+              href={getPathForPage('privacy')}
+              className="transition-colors hover:text-white"
+              onClick={(event) => {
+                event.preventDefault();
+                onNavigate('privacy');
+              }}
+            >
+              {t.footer.privacy}
+            </a>
+            <a
+              href={getPathForPage('terms')}
+              className="transition-colors hover:text-white"
+              onClick={(event) => {
+                event.preventDefault();
+                onNavigate('terms');
+              }}
+            >
+              {t.footer.terms}
+            </a>
+            <a
+              href={getPathForPage('cookies')}
+              className="transition-colors hover:text-white"
+              onClick={(event) => {
+                event.preventDefault();
+                onNavigate('cookies');
+              }}
+            >
+              {t.footer.cookies}
+            </a>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
+
 export default function App() {
   const [lang, setLang] = useState<Language>('bs');
+  const [page, setPage] = useState<Page>(() => getPageFromPath());
   const [scrolled, setScrolled] = useState(false);
   const t = translations[lang];
   const landingExperience = useLandingExperience();
+
+  const navigateToPage = useCallback((nextPage: Page) => {
+    const nextPath = getPathForPage(nextPage);
+
+    if (normalizePath(window.location.pathname) !== nextPath) {
+      window.history.pushState({}, '', nextPath);
+    }
+
+    setPage(nextPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => {
+    const handlePopState = () => setPage(getPageFromPath());
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  useEffect(() => {
+    const meta = PAGE_META[page];
+    const canonicalUrl = `${SITE_ORIGIN}${meta.path}`;
+    const imageUrl = `${SITE_ORIGIN}${OG_IMAGE_PATH}`;
+
+    document.title = meta.title;
+    upsertMeta('meta[name="title"]', { name: 'title', content: meta.title });
+    upsertMeta('meta[name="description"]', { name: 'description', content: meta.description });
+    upsertMeta('meta[name="keywords"]', { name: 'keywords', content: meta.keywords });
+    upsertMeta('meta[name="robots"]', { name: 'robots', content: 'index,follow,max-snippet:160,max-image-preview:large' });
+    upsertMeta('meta[name="theme-color"]', { name: 'theme-color', content: '#050505' });
+    upsertLink('link[rel="canonical"]', { rel: 'canonical', href: canonicalUrl });
+    upsertMeta('meta[property="og:type"]', { property: 'og:type', content: 'website' });
+    upsertMeta('meta[property="og:locale"]', { property: 'og:locale', content: lang === 'bs' ? 'bs_BA' : 'en_US' });
+    upsertMeta('meta[property="og:site_name"]', { property: 'og:site_name', content: 'snovi.fm' });
+    upsertMeta('meta[property="og:title"]', { property: 'og:title', content: meta.title });
+    upsertMeta('meta[property="og:description"]', { property: 'og:description', content: meta.description });
+    upsertMeta('meta[property="og:url"]', { property: 'og:url', content: canonicalUrl });
+    upsertMeta('meta[property="og:image"]', { property: 'og:image', content: imageUrl });
+    upsertMeta('meta[property="og:image:secure_url"]', { property: 'og:image:secure_url', content: imageUrl });
+    upsertMeta('meta[property="og:image:alt"]', {
+      property: 'og:image:alt',
+      content: 'snovi.fm bedtime story and soundscape artwork',
+    });
+    upsertMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: 'summary_large_image' });
+    upsertMeta('meta[name="twitter:url"]', { name: 'twitter:url', content: canonicalUrl });
+    upsertMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: meta.title });
+    upsertMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: meta.description });
+    upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: imageUrl });
+  }, [lang, page]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -231,6 +467,10 @@ export default function App() {
   }, []);
 
   const toggleLang = () => setLang(prev => prev === 'bs' ? 'en' : 'bs');
+
+  if (page !== 'app') {
+    return <LegalPage page={page} lang={lang} onNavigate={navigateToPage} />;
+  }
 
   return (
     <div className="min-h-screen bg-[#050505] pb-28 font-sans text-white selection:bg-violet-500/30 md:pb-36">
@@ -554,7 +794,7 @@ export default function App() {
               <h2 className="text-[11px] font-black uppercase tracking-[0.5em] text-violet-500 mb-8">{t.nav.psychology}</h2>
               <h3 className="text-6xl md:text-8xl font-serif font-bold leading-[0.9] tracking-tighter">{t.psychology.title}</h3>
             </div>
-            <p className="text-2xl text-slate-400 leading-relaxed font-medium">
+            <p className="text-2xl text-slate-400 leading-relaxed font-medium" data-nosnippet>
               {t.psychology.description}
             </p>
           </div>
@@ -1020,9 +1260,36 @@ export default function App() {
               © 2026 snovi.fm • {t.footer.rights}
             </p>
             <div className="flex gap-8 text-[10px] font-black uppercase tracking-widest text-slate-600">
-              <a href="#" className="hover:text-white transition-colors">{t.footer.privacy}</a>
-              <a href="#" className="hover:text-white transition-colors">{t.footer.terms}</a>
-              <a href="#" className="hover:text-white transition-colors">{t.footer.cookies}</a>
+              <a
+                href={getPathForPage('privacy')}
+                onClick={(event) => {
+                  event.preventDefault();
+                  navigateToPage('privacy');
+                }}
+                className="hover:text-white transition-colors"
+              >
+                {t.footer.privacy}
+              </a>
+              <a
+                href={getPathForPage('terms')}
+                onClick={(event) => {
+                  event.preventDefault();
+                  navigateToPage('terms');
+                }}
+                className="hover:text-white transition-colors"
+              >
+                {t.footer.terms}
+              </a>
+              <a
+                href={getPathForPage('cookies')}
+                onClick={(event) => {
+                  event.preventDefault();
+                  navigateToPage('cookies');
+                }}
+                className="hover:text-white transition-colors"
+              >
+                {t.footer.cookies}
+              </a>
             </div>
           </div>
         </div>

@@ -1915,19 +1915,20 @@ export function LandingLibrarySection({
           ) : experience.filteredStories.length ? (
             <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
               {experience.filteredStories.map((story) => (
-                <StoryTile
-                  key={story.id}
-                  story={story}
-                  selected={experience.selectedStory?.id === story.id}
-                  playing={experience.selectedStoryId === story.id && experience.isPlaying}
-                  loading={experience.selectedStoryId === story.id && experience.isAudioLoading}
-                  onSelect={experience.selectStory}
-                  onTogglePlay={experience.toggleStoryPlayback}
-                  popularLabel={story.favorite ? copy.favorites : popularLabel}
-                  publishedLabel={publishedLabel}
-                  comingSoonLabel={comingSoonLabel}
-                  compact
-                />
+                <React.Fragment key={story.id}>
+                  <StoryTile
+                    story={story}
+                    selected={experience.selectedStory?.id === story.id}
+                    playing={experience.selectedStoryId === story.id && experience.isPlaying}
+                    loading={experience.selectedStoryId === story.id && experience.isAudioLoading}
+                    onSelect={experience.selectStory}
+                    onTogglePlay={experience.toggleStoryPlayback}
+                    popularLabel={story.favorite ? copy.favorites : popularLabel}
+                    publishedLabel={publishedLabel}
+                    comingSoonLabel={comingSoonLabel}
+                    compact
+                  />
+                </React.Fragment>
               ))}
             </div>
           ) : (
