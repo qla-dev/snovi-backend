@@ -21,6 +21,7 @@ Route::get('/categories/search', [CategoryController::class, 'search']);
 Route::apiResource('categories', CategoryController::class);
 Route::apiResource('music', MusicController::class);
 Route::apiResource('subcategories', SubcategoryController::class);
+Route::get('/stories/free', [StoryController::class, 'freeSongs']);
 Route::get('/stories/published', [StoryController::class, 'recentPublished']);
 Route::get('/stories/tenrecent', [StoryController::class, 'recentPublished']);
 Route::apiResource('stories', StoryController::class);

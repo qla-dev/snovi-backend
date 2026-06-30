@@ -70,13 +70,25 @@ class StoryController extends Controller
     public function recentPublished(Request $request)
     {
         $limit = $this->limit($request, 50);
-        $query = Story::with(['category', 'subcategory', 'music'])
-            ->where('is_dummy', false)
-            ->whereNotNull('image_url')
-            ->where(function ($q) {
-                $q->whereNotNull('audio_url')
-                    ->orWhereNotNull('audio_path');
-            });
+        $query = $this->publishedStoryQuery();
+
+        $this->applySort($query, $request);
+
+        $stories = $query
+            ->limit($limit)
+            ->get();
+
+        return StoryResource::collection($stories);
+    }
+
+    /**
+     * Return published stories that are available without a subscription.
+     */
+    public function freeSongs(Request $request)
+    {
+        $limit = $this->limit($request, 50);
+        $query = $this->publishedStoryQuery()
+            ->where('locked', false);
 
         $this->applySort($query, $request);
 
@@ -129,6 +141,17 @@ class StoryController extends Controller
     private function pageNo(Request $request): int
     {
         return max($request->integer('page_no', 1), 1);
+    }
+
+    private function publishedStoryQuery(): Builder
+    {
+        return Story::with(['category', 'subcategory', 'music'])
+            ->where('is_dummy', false)
+            ->whereNotNull('image_url')
+            ->where(function ($q) {
+                $q->whereNotNull('audio_url')
+                    ->orWhereNotNull('audio_path');
+            });
     }
 
     private function applySort(Builder $query, Request $request): void
