@@ -58,7 +58,7 @@ class ExpoPushNotificationService
         return $summary;
     }
 
-    private function sendChunk(Collection $tokens, PushNotification $notification): array
+    private function sendChunk(Collection $tokens, PushNotification $notification, bool $allowExperienceSplit = true): array
     {
         $messages = $tokens
             ->map(fn (PushToken $token) => $this->messageFor($token, $notification))
@@ -72,6 +72,17 @@ class ExpoPushNotificationService
                 ->post(self::EXPO_PUSH_URL, $messages);
 
             if (!$response->successful()) {
+                $json = $response->json();
+                if ($allowExperienceSplit && is_array($json) && $this->hasMixedExperienceError($json)) {
+                    Log::warning('[SNOVI][push] Expo push request has mixed projects; splitting batch', [
+                        'notification_id' => $notification->id,
+                        'status' => $response->status(),
+                        'body' => $response->body(),
+                    ]);
+
+                    return $this->sendMixedExperienceChunks($tokens, $notification, $json);
+                }
+
                 $error = $response->body();
                 $tokens->each(fn (PushToken $token) => $token->forceFill(['last_error' => $error])->save());
 
@@ -112,6 +123,93 @@ class ExpoPushNotificationService
                 'response' => ['error' => $error->getMessage()],
             ];
         }
+    }
+
+    private function sendMixedExperienceChunks(Collection $tokens, PushNotification $notification, array $response): array
+    {
+        $groups = $this->groupsFromMixedExperienceResponse($tokens, $response);
+
+        if ($groups->isEmpty()) {
+            $groups = $tokens->map(fn (PushToken $token) => collect([$token]));
+        }
+
+        $summary = [
+            'success_count' => 0,
+            'failure_count' => 0,
+            'response' => [
+                'split_reason' => 'PUSH_TOO_MANY_EXPERIENCE_IDS',
+                'groups' => [],
+            ],
+        ];
+
+        foreach ($groups as $key => $group) {
+            $group = $group->values();
+            if ($group->isEmpty()) {
+                continue;
+            }
+
+            $groupSummary = $this->sendChunk($group, $notification, false);
+            $summary['success_count'] += $groupSummary['success_count'];
+            $summary['failure_count'] += $groupSummary['failure_count'];
+            $summary['response']['groups'][] = [
+                'group' => is_string($key) ? $key : 'single-token',
+                'recipient_count' => $group->count(),
+                'response' => $groupSummary['response'],
+            ];
+        }
+
+        return $summary;
+    }
+
+    private function hasMixedExperienceError(array $response): bool
+    {
+        foreach ($response['errors'] ?? [] as $error) {
+            if (($error['code'] ?? null) === 'PUSH_TOO_MANY_EXPERIENCE_IDS') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function groupsFromMixedExperienceResponse(Collection $tokens, array $response): Collection
+    {
+        $tokenByValue = $tokens->keyBy('token');
+        $usedTokenValues = [];
+        $groups = collect();
+
+        foreach ($response['errors'] ?? [] as $error) {
+            if (($error['code'] ?? null) !== 'PUSH_TOO_MANY_EXPERIENCE_IDS') {
+                continue;
+            }
+
+            foreach (($error['details'] ?? []) as $experienceId => $tokenValues) {
+                if (!is_array($tokenValues)) {
+                    continue;
+                }
+
+                $group = collect($tokenValues)
+                    ->map(fn ($tokenValue) => is_string($tokenValue) ? $tokenByValue->get($tokenValue) : null)
+                    ->filter()
+                    ->values();
+
+                if ($group->isEmpty()) {
+                    continue;
+                }
+
+                foreach ($group as $token) {
+                    $usedTokenValues[$token->token] = true;
+                }
+
+                $groups->put((string) $experienceId, $group);
+            }
+        }
+
+        $tokens
+            ->reject(fn (PushToken $token) => isset($usedTokenValues[$token->token]))
+            ->each(fn (PushToken $token) => $groups->push(collect([$token])));
+
+        return $groups;
     }
 
     private function messageFor(PushToken $token, PushNotification $notification): array
