@@ -176,11 +176,22 @@ class ExpoPushNotificationService
                 continue;
             }
 
+            $projectKey = is_string($key) ? $key : 'single-token';
+            Log::info('[SNOVI][push] Sending Expo batch per project', [
+                'notification_id' => $notification->id,
+                'project' => $projectKey,
+                'recipient_count' => $group->count(),
+                'tokens' => $group->map(fn (PushToken $token) => [
+                    'id' => $token->id,
+                    'token' => $this->maskToken($token->token),
+                ])->values()->all(),
+            ]);
+
             $groupSummary = $this->sendChunk($group, $notification, false);
             $summary['success_count'] += $groupSummary['success_count'];
             $summary['failure_count'] += $groupSummary['failure_count'];
             $summary['response']['groups'][] = [
-                'group' => is_string($key) ? $key : 'single-token',
+                'group' => $projectKey,
                 'recipient_count' => $group->count(),
                 'response' => $groupSummary['response'],
             ];
