@@ -290,6 +290,13 @@ class ExpoPushNotificationService
                     'last_used_at' => now(),
                     'last_error' => null,
                 ])->save();
+                Log::info('[SNOVI][push] Expo recipient accepted', [
+                    'notification_id' => $notificationId,
+                    'token_id' => $token->id,
+                    'token' => $this->maskToken($token->token),
+                    'platform' => $token->platform,
+                    'result' => $result,
+                ]);
                 continue;
             }
 
