@@ -30,6 +30,18 @@ class ExpoPushNotificationService
             'response' => [],
         ];
 
+        Log::info('[SNOVI][push] Starting Expo broadcast', [
+            'notification_id' => $notification->id,
+            'recipient_count' => $tokens->count(),
+            'tokens' => $tokens->map(fn (PushToken $token) => [
+                'id' => $token->id,
+                'token' => $this->maskToken($token->token),
+                'platform' => $token->platform,
+                'disabled_at' => $token->disabled_at?->toIso8601String(),
+                'last_error' => $token->last_error,
+            ])->values()->all(),
+        ]);
+
         if ($tokens->isEmpty()) {
             $notification->forceFill([
                 'recipient_count' => 0,
@@ -90,6 +102,14 @@ class ExpoPushNotificationService
                     'notification_id' => $notification->id,
                     'status' => $response->status(),
                     'body' => $error,
+                    'recipient_count' => $tokens->count(),
+                    'recipients' => $tokens->map(fn (PushToken $token) => [
+                        'id' => $token->id,
+                        'token' => $this->maskToken($token->token),
+                        'platform' => $token->platform,
+                        'disabled_at' => $token->disabled_at?->toIso8601String(),
+                        'last_error' => $token->last_error,
+                    ])->values()->all(),
                 ]);
 
                 return [
@@ -103,7 +123,7 @@ class ExpoPushNotificationService
             }
 
             $results = $response->json('data') ?? [];
-            $counts = $this->applyExpoResults($tokens->values(), $results);
+            $counts = $this->applyExpoResults($tokens->values(), $results, $notification->id);
 
             return [
                 'success_count' => $counts['success_count'],
@@ -115,6 +135,14 @@ class ExpoPushNotificationService
             Log::warning('[SNOVI][push] Expo push send failed', [
                 'notification_id' => $notification->id,
                 'message' => $error->getMessage(),
+                'recipient_count' => $tokens->count(),
+                'recipients' => $tokens->map(fn (PushToken $token) => [
+                    'id' => $token->id,
+                    'token' => $this->maskToken($token->token),
+                    'platform' => $token->platform,
+                    'disabled_at' => $token->disabled_at?->toIso8601String(),
+                    'last_error' => $token->last_error,
+                ])->values()->all(),
             ]);
 
             return [
@@ -228,7 +256,16 @@ class ExpoPushNotificationService
         ], fn ($value) => $value !== null);
     }
 
-    private function applyExpoResults(Collection $tokens, array $results): array
+    private function maskToken(?string $token): ?string
+    {
+        if (!$token || strlen($token) <= 8) {
+            return $token;
+        }
+
+        return substr($token, 0, 4) . '...' . substr($token, -4);
+    }
+
+    private function applyExpoResults(Collection $tokens, array $results, ?int $notificationId = null): array
     {
         $successCount = 0;
         $failureCount = 0;
@@ -252,6 +289,16 @@ class ExpoPushNotificationService
             if (($result['details']['error'] ?? null) === 'DeviceNotRegistered') {
                 $updates['disabled_at'] = now();
             }
+
+            Log::warning('[SNOVI][push] Expo recipient failed', [
+                'notification_id' => $notificationId,
+                'token_id' => $token->id,
+                'token' => $this->maskToken($token->token),
+                'platform' => $token->platform,
+                'result' => $result,
+                'error' => $error,
+                'updates' => $updates,
+            ]);
 
             $token->forceFill($updates)->save();
         }
