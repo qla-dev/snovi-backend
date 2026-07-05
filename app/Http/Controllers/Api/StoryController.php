@@ -7,6 +7,7 @@ use App\Models\Story;
 use Illuminate\Http\Request;
 use App\Http\Resources\StoryResource;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 class StoryController extends Controller
 {
@@ -61,7 +62,7 @@ class StoryController extends Controller
             ->forPage($this->pageNo($request), $this->limit($request))
             ->get();
 
-        return StoryResource::collection($stories);
+        return StoryResource::collection($this->applyDemoUnlock($stories));
     }
 
     /**
@@ -78,7 +79,7 @@ class StoryController extends Controller
             ->limit($limit)
             ->get();
 
-        return StoryResource::collection($stories);
+        return StoryResource::collection($this->applyDemoUnlock($stories));
     }
 
     /**
@@ -96,7 +97,7 @@ class StoryController extends Controller
             ->limit($limit)
             ->get();
 
-        return StoryResource::collection($stories);
+        return StoryResource::collection($this->applyDemoUnlock($stories));
     }
 
     /**
@@ -182,5 +183,16 @@ class StoryController extends Controller
     {
         $query->orderByRaw('LOWER(title) asc')
             ->orderBy('id');
+    }
+
+    private function applyDemoUnlock(Collection $stories): Collection
+    {
+        $stories->each(function ($story, $index) {
+            if ($index < 5) {
+                $story->locked = false;
+            }
+        });
+
+        return $stories;
     }
 }

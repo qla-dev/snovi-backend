@@ -3,7 +3,13 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="mb-0">Price</h4>
-    <a href="{{ route('admin.stories.create') }}" class="btn btn-primary">+ Nova prica</a>
+    <div class="d-flex gap-2">
+        <form action="{{ route('admin.stories.bulk-publish') }}" method="POST" class="d-inline">
+            @csrf
+            <button type="submit" class="btn btn-outline-success" onclick="return confirm('Otključati sve priče i staviti ih u demo mode?')">Demo mode</button>
+        </form>
+        <a href="{{ route('admin.stories.create') }}" class="btn btn-primary">+ Nova prica</a>
+    </div>
 </div>
 
 <div class="card p-3">

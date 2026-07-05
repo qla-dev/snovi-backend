@@ -20,6 +20,7 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     Route::resource('music', MusicController::class);
     Route::resource('subcategories', SubcategoryController::class);
     Route::resource('stories', StoryController::class);
+    Route::post('stories/bulk-publish', [StoryController::class, 'bulkPublish'])->name('stories.bulk-publish');
     Route::get('notifications', [PushNotificationController::class, 'index'])->name('notifications.index');
     Route::post('notifications', [PushNotificationController::class, 'store'])->name('notifications.store');
     Route::get('gift-codes', [GiftCodeController::class, 'index'])->name('gift-codes.index');

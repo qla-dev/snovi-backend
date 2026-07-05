@@ -8,8 +8,8 @@ use App\Models\Category;
 use App\Models\Music;
 use App\Models\Subcategory;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use getID3;
 
@@ -183,6 +183,16 @@ class StoryController extends Controller
         $story->delete();
 
         return redirect()->route('admin.stories.index')->with('status', 'Priča je obrisana.');
+    }
+
+    public function bulkPublish(): \Illuminate\Http\RedirectResponse
+    {
+        Story::query()->update([
+            'locked' => false,
+            'published_at' => now(),
+        ]);
+
+        return redirect()->route('admin.stories.index')->with('status', 'Demo mode aktivan: sve priče su objavljene i otključane.');
     }
 
     private function validatePayload(Request $request, ?int $storyId = null): array
