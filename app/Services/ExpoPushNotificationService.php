@@ -295,9 +295,10 @@ class ExpoPushNotificationService
 
             $failureCount++;
             $error = $result['message'] ?? $result['details']['error'] ?? 'Expo push error';
+            $details = $result['details'] ?? null;
             $updates = ['last_error' => $error];
 
-            if (($result['details']['error'] ?? null) === 'DeviceNotRegistered') {
+            if (($details['error'] ?? null) === 'DeviceNotRegistered') {
                 $updates['disabled_at'] = now();
             }
 
@@ -307,6 +308,7 @@ class ExpoPushNotificationService
                 'token' => $this->maskToken($token->token),
                 'platform' => $token->platform,
                 'result' => $result,
+                'details' => $details,
                 'error' => $error,
                 'updates' => $updates,
             ]);
