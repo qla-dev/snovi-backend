@@ -17,6 +17,7 @@ Route::get('/ping', fn () => [
 Route::get('/notifications/default', [PushNotificationController::class, 'default']);
 Route::post('/push-tokens', [PushTokenController::class, 'store']);
 Route::post('/gift-codes/redeem', [GiftCodeController::class, 'redeem']);
+Route::post('/gift-codes/revoke', [GiftCodeController::class, 'revoke']);
 Route::get('/categories/search', [CategoryController::class, 'search']);
 Route::apiResource('categories', CategoryController::class);
 Route::apiResource('music', MusicController::class);
