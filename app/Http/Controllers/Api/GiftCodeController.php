@@ -23,7 +23,7 @@ class GiftCodeController extends Controller
                 ->lockForUpdate()
                 ->first();
 
-            if (!$giftCode || $giftCode->used) {
+            if (!$giftCode || $giftCode->used || ($giftCode->expires_at && $giftCode->expires_at->isPast())) {
                 return $giftCode;
             }
 
@@ -49,15 +49,28 @@ class GiftCodeController extends Controller
                     'code' => $giftCode->code,
                     'used' => $giftCode->used,
                     'used_date' => $giftCode->used_date,
+                    'expires_at' => $giftCode->expires_at,
                 ],
             ], 409);
         }
+
+        if ($giftCode->expires_at && $giftCode->expires_at->isPast()) {
+            return response()->json([
+                'message' => 'Gift kod je istekao.',
+            ], 410);
+        }
+
+        $expiresAt = $giftCode->expires_at ?: now()->addYear();
 
         return response()->json([
             'message' => 'Gift kod je iskoristen.',
             'data' => [
                 'id' => $giftCode->id,
                 'code' => $giftCode->code,
+                'subscription' => 'customCode',
+                'planLabel' => 'Godišnji plan',
+                'ends' => $expiresAt->toIso8601String(),
+                'expires_at' => $expiresAt->toIso8601String(),
                 'used' => $giftCode->used,
                 'used_date' => $giftCode->used_date,
             ],

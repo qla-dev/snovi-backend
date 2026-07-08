@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\GiftCode;
+use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 
 class GiftCodeController extends Controller
@@ -21,12 +22,16 @@ class GiftCodeController extends Controller
     {
         $data = $request->validate([
             'code' => ['required', 'digits:12', 'unique:gift_codes,code'],
+            'expires_at' => ['nullable', 'date'],
         ]);
 
         GiftCode::query()->create([
             'code' => $data['code'],
             'used' => false,
             'used_date' => null,
+            'expires_at' => !empty($data['expires_at'])
+                ? Carbon::parse($data['expires_at'])->endOfDay()
+                : now()->addYear(),
         ]);
 
         return redirect()

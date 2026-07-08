@@ -13,7 +13,10 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Kod</th>
+                    <th>Kod / broj licence</th>
+                    <th>Deep link</th>
+                    <th>QR</th>
+                    <th>Vazi do</th>
                     <th>Status</th>
                     <th>Datum koristenja</th>
                     <th class="text-end" style="width:180px;">Akcije</th>
@@ -23,7 +26,21 @@
                 @forelse ($giftCodes as $giftCode)
                     <tr>
                         <td class="fw-semibold">#{{ $giftCode->id }}</td>
+                        @php $promoLink = 'https://snovi.fm/promo-code/' . $giftCode->code; @endphp
                         <td class="fw-semibold">{{ $giftCode->code }}</td>
+                        <td>
+                            <a href="{{ $promoLink }}" target="_blank" rel="noopener">{{ $promoLink }}</a>
+                        </td>
+                        <td>
+                            <img
+                                src="https://api.qrserver.com/v1/create-qr-code/?size=96x96&data={{ urlencode($promoLink) }}"
+                                alt="QR {{ $giftCode->code }}"
+                                width="72"
+                                height="72"
+                                style="border-radius:8px; background:#fff; padding:4px;"
+                            >
+                        </td>
+                        <td>{{ optional($giftCode->expires_at)->format('d.m.Y') ?? '-' }}</td>
                         <td>
                             @if($giftCode->used)
                                 <span class="badge bg-danger">Iskoristen</span>
@@ -46,7 +63,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="5" class="text-center text-muted">Nema unosa</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted">Nema unosa</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -80,6 +97,17 @@
                     required
                 >
                 <div class="text-muted small mt-1">Kod mora imati tacno 12 cifara.</div>
+            </div>
+            <div>
+                <label class="form-label" for="gift-code-expires-at">Vazi do</label>
+                <input
+                    id="gift-code-expires-at"
+                    type="date"
+                    name="expires_at"
+                    class="form-control"
+                    value="{{ old('expires_at') }}"
+                >
+                <div class="text-muted small mt-1">Ako ostane prazno, kod vrijedi godinu dana od danas.</div>
             </div>
         </form>
       </div>

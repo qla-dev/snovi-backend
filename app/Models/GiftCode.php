@@ -15,6 +15,7 @@ class GiftCode extends Model
         'code',
         'used',
         'used_date',
+        'expires_at',
     ];
 
     protected function casts(): array
@@ -22,6 +23,7 @@ class GiftCode extends Model
         return [
             'used' => 'boolean',
             'used_date' => 'datetime',
+            'expires_at' => 'datetime',
         ];
     }
 }
