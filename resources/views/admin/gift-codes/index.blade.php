@@ -34,13 +34,25 @@
                             <a href="{{ $promoLink }}" target="_blank" rel="noopener">{{ $promoLink }}</a>
                         </td>
                         <td>
-                            <img
-                                src="https://api.qrserver.com/v1/create-qr-code/?size=96x96&data={{ urlencode($promoLink) }}"
-                                alt="QR {{ $giftCode->code }}"
-                                width="72"
-                                height="72"
-                                style="border-radius:8px; background:#fff; padding:4px;"
+                            <button
+                                type="button"
+                                class="btn p-0 border-0 bg-transparent"
+                                data-bs-toggle="modal"
+                                data-bs-target="#giftQrModal"
+                                data-qr-src="https://api.qrserver.com/v1/create-qr-code/?size=768x768&data={{ urlencode($promoLink) }}"
+                                data-qr-code="{{ $giftCode->code }}"
+                                data-qr-link="{{ $promoLink }}"
+                                data-qr-download="{{ route('admin.gift-codes.qr', $giftCode) }}"
+                                aria-label="Uvecaj QR {{ $giftCode->code }}"
                             >
+                                <img
+                                    src="https://api.qrserver.com/v1/create-qr-code/?size=96x96&data={{ urlencode($promoLink) }}"
+                                    alt="QR {{ $giftCode->code }}"
+                                    width="72"
+                                    height="72"
+                                    style="border-radius:8px; background:#fff; padding:4px; cursor: zoom-in;"
+                                >
+                            </button>
                         </td>
                         <td>{{ optional($giftCode->expires_at)->format('d.m.Y') ?? '-' }}</td>
                         <td>
@@ -87,18 +99,7 @@
         <form id="gift-code-create-form" action="{{ route('admin.gift-codes.store') }}" method="POST" class="vstack gap-3">
             @csrf
             <div class="alert alert-info mb-0">
-                Kod ce biti automatski generisan: 12 znakova, tacno 6 slova i 6 cifara.
-            </div>
-            <div>
-                <label class="form-label" for="gift-code-expires-at">Vazi do</label>
-                <input
-                    id="gift-code-expires-at"
-                    type="date"
-                    name="expires_at"
-                    class="form-control"
-                    value="{{ old('expires_at') }}"
-                >
-                <div class="text-muted small mt-1">Ako ostane prazno, kod vrijedi godinu dana od danas.</div>
+                Kod ce biti automatski generisan: 12 znakova, tacno 6 slova i 6 cifara. Vrijedi godinu dana od kreiranja.
             </div>
         </form>
       </div>
@@ -109,4 +110,67 @@
     </div>
   </div>
 </div>
+
+<div class="modal fade" id="giftQrModal" tabindex="-1" aria-labelledby="giftQrModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background:#0b1220; color:#e5e7eb;">
+      <div class="modal-header border-0">
+        <h5 class="modal-title" id="giftQrModalLabel">QR kod</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img
+            id="giftQrModalImage"
+            src=""
+            alt="QR kod"
+            width="320"
+            height="320"
+            class="img-fluid"
+            style="border-radius:16px; background:#fff; padding:12px;"
+        >
+        <div id="giftQrModalCode" class="fw-semibold mt-3"></div>
+        <a id="giftQrModalLink" href="#" target="_blank" rel="noopener" class="small d-block mt-1"></a>
+      </div>
+      <div class="modal-footer border-0 d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Nazad</button>
+        <a id="giftQrModalDownload" href="#" class="btn btn-primary">Preuzmi SVG</a>
+      </div>
+    </div>
+  </div>
+</div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('giftQrModal');
+        const image = document.getElementById('giftQrModalImage');
+        const code = document.getElementById('giftQrModalCode');
+        const link = document.getElementById('giftQrModalLink');
+        const download = document.getElementById('giftQrModalDownload');
+
+        if (!modal || !image || !code || !link || !download) return;
+
+        modal.addEventListener('show.bs.modal', (event) => {
+            const trigger = event.relatedTarget;
+            if (!trigger) return;
+
+            const qrSrc = trigger.getAttribute('data-qr-src') || '';
+            const qrCode = trigger.getAttribute('data-qr-code') || '';
+            const qrLink = trigger.getAttribute('data-qr-link') || '#';
+            const qrDownload = trigger.getAttribute('data-qr-download') || '#';
+
+            image.src = qrSrc;
+            image.alt = `QR ${qrCode}`;
+            code.textContent = qrCode;
+            link.href = qrLink;
+            link.textContent = qrLink;
+            download.href = qrDownload;
+        });
+
+        modal.addEventListener('hidden.bs.modal', () => {
+            image.src = '';
+        });
+    });
+</script>
+@endpush
