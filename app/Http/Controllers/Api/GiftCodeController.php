@@ -26,10 +26,10 @@ class GiftCodeController extends Controller
     public function redeem(Request $request)
     {
         $validated = $request->validate([
-            'code' => ['required', 'digits:12'],
+            'code' => ['required', 'string', 'size:12', 'regex:/^[A-Z0-9]+$/i'],
         ]);
 
-        $codeValue = trim($validated['code']);
+        $codeValue = strtoupper(trim($validated['code']));
 
         $giftCode = DB::transaction(function () use ($codeValue) {
             $giftCode = GiftCode::query()
@@ -94,10 +94,10 @@ class GiftCodeController extends Controller
     public function revoke(Request $request)
     {
         $validated = $request->validate([
-            'code' => ['required', 'digits:12'],
+            'code' => ['required', 'string', 'size:12', 'regex:/^[A-Z0-9]+$/i'],
         ]);
 
-        $codeValue = trim($validated['code']);
+        $codeValue = strtoupper(trim($validated['code']));
 
         $giftCode = DB::transaction(function () use ($codeValue) {
             $giftCode = GiftCode::query()

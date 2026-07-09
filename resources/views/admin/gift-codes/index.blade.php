@@ -80,23 +80,8 @@
       <div class="modal-body">
         <form id="gift-code-create-form" action="{{ route('admin.gift-codes.store') }}" method="POST" class="vstack gap-3">
             @csrf
-            <div>
-                <label class="form-label" for="gift-code-input">Kod</label>
-                <input
-                    id="gift-code-input"
-                    type="text"
-                    name="code"
-                    class="form-control"
-                    value="{{ old('code') }}"
-                    inputmode="numeric"
-                    autocomplete="off"
-                    pattern="[0-9]{12}"
-                    minlength="12"
-                    maxlength="12"
-                    placeholder="123456789012"
-                    required
-                >
-                <div class="text-muted small mt-1">Kod mora imati tacno 12 cifara.</div>
+            <div class="alert alert-info mb-0">
+                Kod ce biti automatski generisan: 12 znakova, tacno 6 slova i 6 cifara.
             </div>
             <div>
                 <label class="form-label" for="gift-code-expires-at">Vazi do</label>
@@ -119,17 +104,3 @@
   </div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const input = document.getElementById('gift-code-input');
-
-        if (!input) return;
-
-        input.addEventListener('input', () => {
-            input.value = input.value.replace(/\D/g, '').slice(0, 12);
-        });
-    });
-</script>
-@endpush
