@@ -94,6 +94,47 @@ class GiftCodeController extends Controller
         ]);
     }
 
+    public function check(Request $request)
+    {
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'size:12', 'regex:/^[A-Z0-9]+$/i'],
+        ]);
+
+        $codeValue = strtoupper(trim($validated['code']));
+
+        $giftCode = GiftCode::query()
+            ->where('code', $codeValue)
+            ->first();
+
+        if (!$giftCode) {
+            return response()->json([
+                'message' => 'Gift kod nije pronadjen.',
+            ], 404);
+        }
+
+        if ($giftCode->used) {
+            return response()->json([
+                'message' => 'Gift kod je vec iskoristen.',
+            ], 409);
+        }
+
+        if ($giftCode->expires_at && $giftCode->expires_at->isPast()) {
+            return response()->json([
+                'message' => 'Gift kod je istekao.',
+            ], 410);
+        }
+
+        return response()->json([
+            'message' => 'Gift kod je validan.',
+            'data' => [
+                'id' => $giftCode->id,
+                'code' => $giftCode->code,
+                'valid' => true,
+                'expires_at' => optional($giftCode->expires_at)->toIso8601String(),
+            ],
+        ]);
+    }
+
     public function email(Request $request)
     {
         $validated = $request->validate([
@@ -110,12 +151,14 @@ class GiftCodeController extends Controller
                 ->lockForUpdate()
                 ->first();
 
-            if (!$giftCode || !$giftCode->used) {
+            if (!$giftCode || ($giftCode->expires_at && $giftCode->expires_at->isPast())) {
                 return null;
             }
 
             $giftCode->forceFill([
                 'email' => $email,
+                'used' => true,
+                'used_date' => $giftCode->used_date ?: now(),
             ])->save();
 
             return $giftCode;
@@ -123,11 +166,26 @@ class GiftCodeController extends Controller
 
         if (!$giftCode) {
             return response()->json([
-                'message' => 'Gift kod nije pronadjen ili jos nije aktiviran.',
+                'message' => 'Gift kod nije pronadjen ili je istekao.',
             ], 404);
         }
 
-        return $this->giftCodePayload($giftCode, 'Email je sacuvan.');
+        $expiresAt = $giftCode->expires_at ?: now()->addYear();
+
+        return response()->json([
+            'message' => 'Gift kod je aktiviran.',
+            'data' => [
+                'id' => $giftCode->id,
+                'code' => $giftCode->code,
+                'email' => $giftCode->email,
+                'subscription' => 'customCode',
+                'planLabel' => 'GodiÅ¡nji plan',
+                'ends' => $expiresAt->toIso8601String(),
+                'expires_at' => $expiresAt->toIso8601String(),
+                'used' => $giftCode->used,
+                'used_date' => $giftCode->used_date,
+            ],
+        ]);
     }
 
     public function revoke(Request $request)

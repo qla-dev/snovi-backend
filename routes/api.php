@@ -16,6 +16,7 @@ Route::get('/ping', fn () => [
 
 Route::get('/notifications/default', [PushNotificationController::class, 'default']);
 Route::post('/push-tokens', [PushTokenController::class, 'store']);
+Route::post('/gift-codes/check', [GiftCodeController::class, 'check']);
 Route::post('/gift-codes/redeem', [GiftCodeController::class, 'redeem']);
 Route::post('/gift-codes/email', [GiftCodeController::class, 'email']);
 Route::post('/gift-codes/revoke', [GiftCodeController::class, 'revoke']);
