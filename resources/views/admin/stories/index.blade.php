@@ -8,6 +8,10 @@
             @csrf
             <button type="submit" class="btn btn-outline-success" onclick="return confirm('Otključati sve priče i staviti ih u demo mode?')">Demo mode</button>
         </form>
+        <form action="{{ route('admin.stories.prod-mode') }}" method="POST" class="d-inline">
+            @csrf
+            <button type="submit" class="btn btn-outline-warning" onclick="return confirm('Aktivirati prod mode: otkljucati po jednu pricu iz svake kategorije i zakljucati sve ostale?')">Prod mode</button>
+        </form>
         <a href="{{ route('admin.stories.create') }}" class="btn btn-primary">+ Nova prica</a>
     </div>
 </div>

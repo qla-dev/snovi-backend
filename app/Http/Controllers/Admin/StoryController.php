@@ -195,6 +195,33 @@ class StoryController extends Controller
         return redirect()->route('admin.stories.index')->with('status', 'Demo mode aktivan: sve priče su objavljene i otključane.');
     }
 
+    public function prodMode(): \Illuminate\Http\RedirectResponse
+    {
+        Story::query()->update([
+            'locked' => true,
+            'published_at' => now(),
+        ]);
+
+        Story::query()
+            ->select('category_id')
+            ->whereNotNull('category_id')
+            ->distinct()
+            ->pluck('category_id')
+            ->each(function ($categoryId) {
+                $story = Story::query()
+                    ->where('category_id', $categoryId)
+                    ->orderByDesc('published_at')
+                    ->orderByDesc('id')
+                    ->first();
+
+                if ($story) {
+                    $story->forceFill(['locked' => false])->save();
+                }
+            });
+
+        return redirect()->route('admin.stories.index')->with('status', 'Prod mode aktivan: po jedna prica iz svake kategorije je otkljucana, ostale su zakljucane.');
+    }
+
     private function validatePayload(Request $request, ?int $storyId = null): array
     {
         $storyId ??= 0;

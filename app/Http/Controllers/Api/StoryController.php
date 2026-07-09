@@ -187,12 +187,6 @@ class StoryController extends Controller
 
     private function applyDemoUnlock(Collection $stories): Collection
     {
-        $stories->each(function ($story, $index) {
-            if ($index < 5) {
-                $story->locked = false;
-            }
-        });
-
         return $stories;
     }
 }
