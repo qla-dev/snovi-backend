@@ -26,7 +26,7 @@
             <tbody>
                 @forelse ($giftCodes as $giftCode)
                     <tr>
-                        <td class="fw-semibold">#{{ $giftCode->id }}</td>
+                        <td class="fw-semibold" data-order="{{ $giftCode->id }}">#{{ $giftCode->id }}</td>
                         @php $promoLink = 'https://snovi.fm/promo-code/' . $giftCode->code; @endphp
                         <td class="fw-semibold">{{ $giftCode->code }}</td>
                         <td>{{ $giftCode->email ?: '-' }}</td>
