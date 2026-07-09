@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\GiftCode;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Validation\ValidationException;
 
 class GiftCodeController extends Controller
@@ -54,6 +55,32 @@ class GiftCodeController extends Controller
         return redirect()
             ->route('admin.gift-codes.index')
             ->with('status', 'Gift kod je istekao.');
+    }
+
+    public function qr(GiftCode $giftCode)
+    {
+        $promoLink = 'https://snovi.fm/promo-code/' . $giftCode->code;
+        $qrSource = 'https://api.qrserver.com/v1/create-qr-code/?format=svg&size=2048x2048&ecc=H&margin=64&data=' . urlencode($promoLink);
+        $escapedSource = e($qrSource);
+        $escapedCode = e($giftCode->code);
+        $escapedLink = e($promoLink);
+
+        $svg = <<<SVG
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="2048" height="2048" viewBox="0 0 2048 2048" role="img" aria-label="QR kod {$escapedCode}">
+  <rect width="2048" height="2048" fill="#ffffff"/>
+  <image href="{$escapedSource}" x="0" y="0" width="2048" height="2048"/>
+  <metadata>
+    <code>{$escapedCode}</code>
+    <link>{$escapedLink}</link>
+  </metadata>
+</svg>
+SVG;
+
+        return Response::make($svg, 200, [
+            'Content-Type' => 'image/svg+xml; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="snovi-' . $giftCode->code . '-qr.svg"',
+        ]);
     }
 
     private function generateUniqueCode(): string

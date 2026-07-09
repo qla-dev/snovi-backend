@@ -16,6 +16,7 @@ class GiftCodeController extends Controller
             'data' => [
                 'id' => $giftCode->id,
                 'code' => $giftCode->code,
+                'email' => $giftCode->email,
                 'used' => $giftCode->used,
                 'used_date' => $giftCode->used_date,
                 'expires_at' => $giftCode->expires_at,
@@ -61,6 +62,7 @@ class GiftCodeController extends Controller
                 'data' => [
                     'id' => $giftCode->id,
                     'code' => $giftCode->code,
+                    'email' => $giftCode->email,
                     'used' => $giftCode->used,
                     'used_date' => $giftCode->used_date,
                     'expires_at' => $giftCode->expires_at,
@@ -81,6 +83,7 @@ class GiftCodeController extends Controller
             'data' => [
                 'id' => $giftCode->id,
                 'code' => $giftCode->code,
+                'email' => $giftCode->email,
                 'subscription' => 'customCode',
                 'planLabel' => 'Godišnji plan',
                 'ends' => $expiresAt->toIso8601String(),
@@ -89,6 +92,42 @@ class GiftCodeController extends Controller
                 'used_date' => $giftCode->used_date,
             ],
         ]);
+    }
+
+    public function email(Request $request)
+    {
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'size:12', 'regex:/^[A-Z0-9]+$/i'],
+            'email' => ['required', 'email:rfc,dns', 'max:255'],
+        ]);
+
+        $codeValue = strtoupper(trim($validated['code']));
+        $email = strtolower(trim($validated['email']));
+
+        $giftCode = DB::transaction(function () use ($codeValue, $email) {
+            $giftCode = GiftCode::query()
+                ->where('code', $codeValue)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$giftCode || !$giftCode->used) {
+                return null;
+            }
+
+            $giftCode->forceFill([
+                'email' => $email,
+            ])->save();
+
+            return $giftCode;
+        });
+
+        if (!$giftCode) {
+            return response()->json([
+                'message' => 'Gift kod nije pronadjen ili jos nije aktiviran.',
+            ], 404);
+        }
+
+        return $this->giftCodePayload($giftCode, 'Email je sacuvan.');
     }
 
     public function revoke(Request $request)

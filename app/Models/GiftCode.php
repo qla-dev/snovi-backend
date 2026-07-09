@@ -13,6 +13,7 @@ class GiftCode extends Model
 
     protected $fillable = [
         'code',
+        'email',
         'used',
         'used_date',
         'expires_at',

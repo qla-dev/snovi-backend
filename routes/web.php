@@ -25,5 +25,6 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     Route::post('notifications', [PushNotificationController::class, 'store'])->name('notifications.store');
     Route::get('gift-codes', [GiftCodeController::class, 'index'])->name('gift-codes.index');
     Route::post('gift-codes', [GiftCodeController::class, 'store'])->name('gift-codes.store');
+    Route::get('gift-codes/{giftCode}/qr.svg', [GiftCodeController::class, 'qr'])->name('gift-codes.qr');
     Route::post('gift-codes/{giftCode}/expire', [GiftCodeController::class, 'expire'])->name('gift-codes.expire');
 });

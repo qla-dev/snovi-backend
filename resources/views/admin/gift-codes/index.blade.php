@@ -14,12 +14,13 @@
                 <tr>
                     <th>ID</th>
                     <th>Kod / broj licence</th>
+                    <th>Email</th>
                     <th>Deep link</th>
                     <th>QR</th>
                     <th>Vazi do</th>
                     <th>Status</th>
                     <th>Datum koristenja</th>
-                    <th class="text-end" style="width:180px;">Akcije</th>
+                    <th class="text-end" style="width:220px;">Akcije</th>
                 </tr>
             </thead>
             <tbody>
@@ -28,6 +29,7 @@
                         <td class="fw-semibold">#{{ $giftCode->id }}</td>
                         @php $promoLink = 'https://snovi.fm/promo-code/' . $giftCode->code; @endphp
                         <td class="fw-semibold">{{ $giftCode->code }}</td>
+                        <td>{{ $giftCode->email ?: '-' }}</td>
                         <td>
                             <a href="{{ $promoLink }}" target="_blank" rel="noopener">{{ $promoLink }}</a>
                         </td>
@@ -50,6 +52,12 @@
                         </td>
                         <td>{{ optional($giftCode->used_date)->format('d.m.Y H:i') ?? '-' }}</td>
                         <td class="text-end">
+                            <a
+                                href="{{ route('admin.gift-codes.qr', $giftCode) }}"
+                                class="btn btn-sm btn-outline-light"
+                            >
+                                Preuzmi
+                            </a>
                             @if(!$giftCode->used)
                                 <form action="{{ route('admin.gift-codes.expire', $giftCode) }}" method="POST" class="d-inline">
                                     @csrf
@@ -57,13 +65,11 @@
                                         Expire
                                     </button>
                                 </form>
-                            @else
-                                <span class="text-muted small">Nema akcija</span>
                             @endif
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="8" class="text-center text-muted">Nema unosa</td></tr>
+                    <tr><td colspan="9" class="text-center text-muted">Nema unosa</td></tr>
                 @endforelse
             </tbody>
         </table>
