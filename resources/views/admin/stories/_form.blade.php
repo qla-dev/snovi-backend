@@ -97,8 +97,8 @@
 <div class="row g-3">
     <div class="col-md-6">
         <input type="hidden" name="image_url" value="{{ old('image_url', $story->image_url) }}">
-        <label class="form-label">Upload sliku <small class="text-muted">(1536x1024, JPG/PNG)</small></label>
-        <input type="file" name="image_upload" class="form-control" accept="image/png,image/jpeg">
+        <label class="form-label">Upload sliku <small class="text-muted">(1536x1024, JPG/PNG/WebP)</small></label>
+        <input type="file" name="image_upload" class="form-control" accept="image/png,image/jpeg,image/webp">
         <div class="mt-2">
             <small class="text-muted">Pregled slike</small>
             <div class="rounded p-0" style="min-height:120px;">
@@ -204,6 +204,8 @@
   const audioPill = statusBar?.querySelector('[data-type="audio"]');
   const publishPill = statusBar?.querySelector('[data-type="publish"]');
   const form = imgUrlInput?.closest('form');
+  const allowedImageTypes = ['image/png', 'image/jpeg', 'image/webp'];
+  const allowedImageExtensions = ['png', 'jpg', 'jpeg', 'webp'];
   let progressTimer = null;
   let manualProgressTimer = null;
 
@@ -282,8 +284,10 @@
     imgUploadInput.addEventListener('change', (e) => {
       const file = e.target.files?.[0];
       if (file) {
-        if (!['image/png', 'image/jpeg'].includes(file.type)) {
-          alert('Dozvoljen format slike: PNG ili JPG.');
+        const extension = file.name.split('.').pop()?.toLowerCase();
+        const isAllowedImage = allowedImageTypes.includes(file.type) || (!file.type && allowedImageExtensions.includes(extension));
+        if (!isAllowedImage) {
+          alert('Dozvoljen format slike: PNG, JPG ili WebP.');
           imgUploadInput.value = '';
           return;
         }

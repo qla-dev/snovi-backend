@@ -244,7 +244,7 @@ class StoryController extends Controller
             'audio_url' => ['nullable', 'string', 'max:500'],
             'published_at' => ['nullable', 'date'],
             // Allow uploads up to 100 MB (Laravel max rule is in KB)
-            'image_upload' => ['nullable', 'image', 'max:102400'],
+            'image_upload' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:102400'],
             'audio_upload' => ['nullable', 'file', 'max:102400'],
         ]);
 
