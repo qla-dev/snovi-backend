@@ -54,7 +54,7 @@ class StoryController extends Controller
 
         if ($request->boolean('locked')) {
             $query->where('locked', true);
-        } elseif ($request->boolean('unlocked')) {
+        } elseif ($request->boolean('unlocked') || $request->boolean('free')) {
             $query->where('locked', false);
         }
 
