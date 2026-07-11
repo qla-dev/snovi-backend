@@ -101,6 +101,23 @@ class StoryController extends Controller
     }
 
     /**
+     * Return the playable stories used to fill a collection playlist.
+     */
+    public function bulkPlaylist(Request $request)
+    {
+        $validated = $request->validate([
+            'category_id' => ['required', 'integer', 'exists:categories,id'],
+        ]);
+
+        $stories = $this->publishedStoryQuery()
+            ->where('category_id', $validated['category_id'])
+            ->orderBy('id')
+            ->get();
+
+        return StoryResource::collection($this->applyDemoUnlock($stories));
+    }
+
+    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)

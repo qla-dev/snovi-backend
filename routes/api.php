@@ -27,4 +27,5 @@ Route::apiResource('subcategories', SubcategoryController::class);
 Route::get('/stories/free', [StoryController::class, 'freeSongs']);
 Route::get('/stories/published', [StoryController::class, 'recentPublished']);
 Route::get('/stories/tenrecent', [StoryController::class, 'recentPublished']);
+Route::post('/stories/playlist/bulk', [StoryController::class, 'bulkPlaylist']);
 Route::apiResource('stories', StoryController::class);
