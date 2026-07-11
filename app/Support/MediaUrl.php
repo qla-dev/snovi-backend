@@ -6,7 +6,7 @@ use Illuminate\Support\Str;
 
 class MediaUrl
 {
-    public static function resolve(?string $value): ?string
+    public static function resolve(?string $value, string $storageBaseUrl): ?string
     {
         if (!$value) {
             return null;
@@ -19,11 +19,11 @@ class MediaUrl
         if (Str::contains($normalizedPath, '/storage/')) {
             $relativePath = Str::after($normalizedPath, '/storage/');
 
-            return rtrim((string) config('media.storage_url'), '/').'/'.ltrim($relativePath, '/');
+            return rtrim($storageBaseUrl, '/').'/'.ltrim($relativePath, '/');
         }
 
         if (!Str::startsWith($value, ['http://', 'https://', '//'])) {
-            return rtrim((string) config('media.storage_url'), '/').'/'.ltrim($value, '/');
+            return rtrim($storageBaseUrl, '/').'/'.ltrim($value, '/');
         }
 
         return $value;

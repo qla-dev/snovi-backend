@@ -15,7 +15,12 @@ class MusicResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $file = MediaUrl::resolve($this->file);
+        $localStorageUrl = $request->getSchemeAndHttpHost().'/storage';
+        $audioStorageUrl = config('media.story_audio_storage_url') ?: $localStorageUrl;
+        $file = MediaUrl::resolve(
+            $this->file,
+            $audioStorageUrl,
+        );
 
         return [
             'id' => $this->id,

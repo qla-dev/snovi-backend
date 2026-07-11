@@ -1,13 +1,11 @@
 <?php
 
-$localStorageUrl = rtrim(env('APP_URL', 'http://localhost'), '/').'/storage';
-$storageUrl = env('MEDIA_STORAGE_URL');
-
 return [
     /*
-    | Public base URL returned by API resources for files under /storage.
-    | Defaults to this application's local public storage. Set the env value
-    | to switch every story/music response to another public storage host.
+    | Optional public base URL used for story sound and background music.
+    | When empty, the current API request host's /storage path is used.
     */
-    'storage_url' => rtrim($storageUrl ?: $localStorageUrl, '/'),
+    'story_audio_storage_url' => env('STORY_AUDIO_STORAGE_URL')
+        ? rtrim(env('STORY_AUDIO_STORAGE_URL'), '/')
+        : null,
 ];

@@ -15,11 +15,13 @@ class StoryResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $image = MediaUrl::resolve($this->image_url);
+        $localStorageUrl = $request->getSchemeAndHttpHost().'/storage';
+        $storyAudioStorageUrl = config('media.story_audio_storage_url') ?: $localStorageUrl;
+        $image = MediaUrl::resolve($this->image_url, $localStorageUrl);
 
-        // Prefer explicit audio_url, then audio_path; normalize storage host via env.
+        // Only story sound can use the optional remote storage host.
         $audio = $this->audio_url ?: $this->audio_path;
-        $audio = MediaUrl::resolve($audio);
+        $audio = MediaUrl::resolve($audio, $storyAudioStorageUrl);
 
         $musicLevel = (int) ($this->music_level ?? 20);
         $effects = $this->effects ?? [];
