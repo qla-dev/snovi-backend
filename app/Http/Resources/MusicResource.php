@@ -2,9 +2,9 @@
 
 namespace App\Http\Resources;
 
+use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Str;
 
 class MusicResource extends JsonResource
 {
@@ -15,10 +15,7 @@ class MusicResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $file = $this->file;
-        if ($file && !Str::startsWith($file, ['http://', 'https://', '//'])) {
-            $file = $request->getSchemeAndHttpHost() . '/' . ltrim($file, '/');
-        }
+        $file = MediaUrl::resolve($this->file);
 
         return [
             'id' => $this->id,

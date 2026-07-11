@@ -2,9 +2,9 @@
 
 namespace App\Http\Resources;
 
+use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Str;
 
 class StoryResource extends JsonResource
 {
@@ -15,20 +15,11 @@ class StoryResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $image = $this->image_url;
-        if ($image && !Str::startsWith($image, ['http://', 'https://', '//'])) {
-            $image = url($image);
-        }
+        $image = MediaUrl::resolve($this->image_url);
 
-        // Prefer explicit audio_url, then audio_path; always return an absolute URL
+        // Prefer explicit audio_url, then audio_path; normalize storage host via env.
         $audio = $this->audio_url ?: $this->audio_path;
-        if ($audio) {
-            if (!Str::startsWith($audio, ['http://', 'https://', '//'])) {
-                // If it looks like a storage path, normalize with app URL
-                $host = $request->getSchemeAndHttpHost();
-                $audio = $host . '/' . ltrim($audio, '/');
-            }
-        }
+        $audio = MediaUrl::resolve($audio);
 
         $musicLevel = (int) ($this->music_level ?? 20);
         $effects = $this->effects ?? [];
