@@ -35,14 +35,19 @@ class PushNotificationController extends Controller
         $validated = $request->validate([
             'body' => ['required', 'string', 'max:190'],
             'description' => ['required', 'string', 'max:500'],
+            'open_external' => ['sometimes', 'boolean'],
+            'link_url' => ['nullable', 'url:http,https', 'max:2000', 'required_if:open_external,1'],
         ]);
+
+        $openExternal = $request->boolean('open_external');
 
         $notification = PushNotification::query()->create([
             'body' => $validated['body'],
             'description' => $validated['description'],
             'data' => [
                 'source' => 'cms',
-            ],
+                'action' => $openExternal ? 'external_url' : 'open_app',
+            ] + ($openExternal ? ['url' => $validated['link_url']] : []),
         ]);
 
         $summary = $pushService->sendBroadcast($notification);

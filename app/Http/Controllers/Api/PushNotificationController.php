@@ -13,6 +13,8 @@ class PushNotificationController extends Controller
             'data' => [
                 'body' => PushNotification::DEFAULT_BODY,
                 'description' => PushNotification::DEFAULT_DESCRIPTION,
+                'action' => 'open_app',
+                'url' => null,
             ],
         ]);
     }
