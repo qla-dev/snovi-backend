@@ -28,6 +28,7 @@ class Story extends Model
         'is_favorite',
         'audio_url',
         'audio_path',
+        'can_seek',
         'effects',
         'meta',
         'published_at',
@@ -40,6 +41,7 @@ class Story extends Model
         'is_dummy' => 'boolean',
         'locked' => 'boolean',
         'is_favorite' => 'boolean',
+        'can_seek' => 'boolean',
         'published_at' => 'datetime',
     ];
 

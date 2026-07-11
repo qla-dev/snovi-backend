@@ -92,6 +92,7 @@ class StoryController extends Controller
         $data['is_dummy'] = $request->boolean('is_dummy');
         $data['locked'] = $request->boolean('locked');
         $data['is_favorite'] = $request->boolean('is_favorite');
+        $data['can_seek'] = false;
 
         $story = Story::create($data);
 

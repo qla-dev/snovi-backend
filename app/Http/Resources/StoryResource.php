@@ -16,12 +16,14 @@ class StoryResource extends JsonResource
     public function toArray(Request $request): array
     {
         $localStorageUrl = $request->getSchemeAndHttpHost().'/storage';
-        $storyAudioStorageUrl = config('media.story_audio_storage_url') ?: $localStorageUrl;
+        $flexGuideStorageUrl = config('media.story_audio_storage_url') ?: $localStorageUrl;
         $image = MediaUrl::resolve($this->image_url, $localStorageUrl);
 
-        // Only story sound can use the optional remote storage host.
-        $audio = $this->audio_url ?: $this->audio_path;
-        $audio = MediaUrl::resolve($audio, $storyAudioStorageUrl);
+        // Return both storage locations. Clients can select the source based on
+        // can_seek without having to reconstruct deployment-specific URLs.
+        $audioReference = $this->getRawOriginal('audio_url') ?: $this->audio_path;
+        $localSound = MediaUrl::resolve($audioReference, $localStorageUrl);
+        $flexGuideSound = MediaUrl::resolve($audioReference, $flexGuideStorageUrl);
 
         $musicLevel = (int) ($this->music_level ?? 20);
         $effects = $this->effects ?? [];
@@ -48,7 +50,10 @@ class StoryResource extends JsonResource
             'is_dummy' => $this->is_dummy,
             'locked' => $this->locked,
             'favorite' => $this->is_favorite,
-            'sound' => $audio,
+            'can_seek' => (bool) $this->can_seek,
+            'sound_local' => $localSound,
+            'sound_flexguide' => $flexGuideSound,
+            'sound' => $this->can_seek ? $flexGuideSound : $localSound,
             'effects' => $effects,
             'meta' => $this->meta ?? [],
             'published_at' => optional($this->published_at)->toIso8601String(),
