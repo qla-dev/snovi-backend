@@ -212,8 +212,13 @@ class GiftCodeController extends Controller
 
         $codeValue = strtoupper(trim($validated['code']));
         $email = strtolower(trim($validated['email']));
+        $this->findCode($codeValue);
 
-        $giftCode = DB::transaction(function () use ($codeValue, $email) {
+        // The app activates a code only together with an email. A code that is already active
+        // moves to another phone only with the email it was activated with.
+        $emailTaken = false;
+
+        $giftCode = DB::transaction(function () use ($codeValue, $email, &$emailTaken) {
             $giftCode = GiftCode::query()
                 ->where('code', $codeValue)
                 ->lockForUpdate()
@@ -221,6 +226,11 @@ class GiftCodeController extends Controller
 
             if (!$giftCode || ($giftCode->expires_at && $giftCode->expires_at->isPast())) {
                 return null;
+            }
+
+            if ($giftCode->used && $giftCode->email && $giftCode->email !== $email) {
+                $emailTaken = true;
+                return $giftCode;
             }
 
             $giftCode->forceFill([
@@ -236,6 +246,12 @@ class GiftCodeController extends Controller
             return response()->json([
                 'message' => 'Gift kod nije pronadjen ili je istekao.',
             ], 404);
+        }
+
+        if ($emailTaken) {
+            return response()->json([
+                'message' => 'Kod je vec aktiviran sa drugim emailom.',
+            ], 409);
         }
 
         $expiresAt = $giftCode->expires_at ?: now()->addYear();

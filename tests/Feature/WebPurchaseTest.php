@@ -104,4 +104,28 @@ class WebPurchaseTest extends TestCase
             ->assertJsonPath('data.active', true)
             ->assertJsonPath('data.ends', $renewedEnd->toIso8601String());
     }
+
+    public function test_code_is_activated_with_email_and_moves_only_with_the_same_email(): void
+    {
+        $code = GiftCode::query()->create([
+            'code' => 'AB12CD34EF56',
+            'used' => false,
+            'expires_at' => now()->addYear(),
+        ]);
+
+        // Checking does not use the code up.
+        $this->postJson('/api/gift-codes/check', ['code' => $code->code])->assertOk();
+        $this->assertFalse($code->fresh()->used);
+
+        $this->postJson('/api/gift-codes/email', ['code' => $code->code, 'email' => 'Mama@Gmail.com'])
+            ->assertOk()
+            ->assertJsonPath('data.subscription', 'customCode')
+            ->assertJsonPath('data.email', 'mama@gmail.com');
+        $this->assertTrue($code->fresh()->used);
+
+        // New phone: same email works, another email does not.
+        $this->postJson('/api/gift-codes/email', ['code' => $code->code, 'email' => 'mama@gmail.com'])->assertOk();
+        $this->postJson('/api/gift-codes/email', ['code' => $code->code, 'email' => 'neko@gmail.com'])->assertStatus(409);
+        $this->assertSame('mama@gmail.com', $code->fresh()->email);
+    }
 }
