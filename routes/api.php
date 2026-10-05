@@ -8,11 +8,15 @@ use App\Http\Controllers\Api\PushNotificationController;
 use App\Http\Controllers\Api\PushTokenController;
 use App\Http\Controllers\Api\SubcategoryController;
 use App\Http\Controllers\Api\StoryController;
+use App\Http\Controllers\Api\SocialPublishController;
 
 Route::get('/ping', fn () => [
     'ok' => true,
     'timestamp' => now()->toIso8601String(),
 ]);
+
+// Claude agent: schedules the daily Facebook/Instagram sliders (secret in the body).
+Route::post('/social/publish', SocialPublishController::class)->middleware('throttle:20,1');
 
 Route::get('/notifications/default', [PushNotificationController::class, 'default']);
 Route::post('/push-tokens', [PushTokenController::class, 'store']);
