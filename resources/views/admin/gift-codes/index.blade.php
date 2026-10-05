@@ -20,7 +20,7 @@
                     <th>Vazi do</th>
                     <th>Status</th>
                     <th>Datum koristenja</th>
-                    <th class="text-end" style="width:220px;">Akcije</th>
+                    <th class="text-end" style="width:320px;">Akcije</th>
                 </tr>
             </thead>
             <tbody>
@@ -64,6 +64,8 @@
                         </td>
                         <td>{{ optional($giftCode->used_date)->format('d.m.Y H:i') ?? '-' }}</td>
                         <td class="text-end">
+                            <a href="{{ route('admin.gift-codes.voucher', $giftCode) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-light">Vaučer</a>
+                            <a href="{{ route('admin.gift-codes.voucher', [$giftCode, 'print' => 1]) }}" target="_blank" rel="noopener" class="btn btn-sm btn-primary">PDF</a>
                             <a
                                 href="{{ route('admin.gift-codes.qr', $giftCode) }}"
                                 class="btn btn-sm btn-outline-light"

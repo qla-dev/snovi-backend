@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\GiftCode;
+use App\Services\RevenueCatSubscribers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class GiftCodeController extends Controller
 {
@@ -24,6 +27,37 @@ class GiftCodeController extends Controller
         ]);
     }
 
+    /**
+     * A code issued for a web purchase lasts as long as the subscription: after a renewal its end
+     * moves to the new expiry from RevenueCat. A failed lookup keeps the stored date.
+     */
+    private function refreshWebExpiry(GiftCode $giftCode): GiftCode
+    {
+        if (!$giftCode->isWebPurchase() || !RevenueCatSubscribers::configured()) {
+            return $giftCode;
+        }
+
+        try {
+            $subscription = app(RevenueCatSubscribers::class)->activeWebSubscription($giftCode->rc_app_user_id);
+        } catch (Throwable $exception) {
+            Log::warning("Gift code {$giftCode->id} expiry not refreshed: {$exception->getMessage()}");
+            return $giftCode;
+        }
+
+        if ($subscription && (!$giftCode->expires_at || $subscription['expires_at']->gt($giftCode->expires_at))) {
+            $giftCode->forceFill(['expires_at' => $subscription['expires_at']])->save();
+        }
+
+        return $giftCode;
+    }
+
+    private function findCode(string $codeValue): ?GiftCode
+    {
+        $giftCode = GiftCode::query()->where('code', $codeValue)->first();
+
+        return $giftCode ? $this->refreshWebExpiry($giftCode) : null;
+    }
+
     public function redeem(Request $request)
     {
         $validated = $request->validate([
@@ -31,6 +65,7 @@ class GiftCodeController extends Controller
         ]);
 
         $codeValue = strtoupper(trim($validated['code']));
+        $this->findCode($codeValue);
 
         $giftCode = DB::transaction(function () use ($codeValue) {
             $giftCode = GiftCode::query()
@@ -85,7 +120,8 @@ class GiftCodeController extends Controller
                 'code' => $giftCode->code,
                 'email' => $giftCode->email,
                 'subscription' => 'customCode',
-                'planLabel' => 'Godišnji plan',
+                'plan' => $giftCode->plan,
+                'planLabel' => $giftCode->planLabel(),
                 'ends' => $expiresAt->toIso8601String(),
                 'expires_at' => $expiresAt->toIso8601String(),
                 'used' => $giftCode->used,
@@ -100,11 +136,7 @@ class GiftCodeController extends Controller
             'code' => ['required', 'string', 'size:12', 'regex:/^[A-Z0-9]+$/i'],
         ]);
 
-        $codeValue = strtoupper(trim($validated['code']));
-
-        $giftCode = GiftCode::query()
-            ->where('code', $codeValue)
-            ->first();
+        $giftCode = $this->findCode(strtoupper(trim($validated['code'])));
 
         if (!$giftCode) {
             return response()->json([
@@ -130,6 +162,42 @@ class GiftCodeController extends Controller
                 'id' => $giftCode->id,
                 'code' => $giftCode->code,
                 'valid' => true,
+                'plan' => $giftCode->plan,
+                'planLabel' => $giftCode->planLabel(),
+                'expires_at' => optional($giftCode->expires_at)->toIso8601String(),
+            ],
+        ]);
+    }
+
+    /**
+     * Current end of an already activated code, without using it up. The app calls this when its
+     * stored end has passed, so a renewed monthly web subscription keeps working.
+     */
+    public function status(Request $request)
+    {
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'size:12', 'regex:/^[A-Z0-9]+$/i'],
+        ]);
+
+        $giftCode = $this->findCode(strtoupper(trim($validated['code'])));
+
+        if (!$giftCode) {
+            return response()->json([
+                'message' => 'Gift kod nije pronadjen.',
+            ], 404);
+        }
+
+        $active = !$giftCode->expires_at || $giftCode->expires_at->isFuture();
+
+        return response()->json([
+            'message' => $active ? 'Gift kod je aktivan.' : 'Gift kod je istekao.',
+            'data' => [
+                'code' => $giftCode->code,
+                'active' => $active,
+                'used' => $giftCode->used,
+                'plan' => $giftCode->plan,
+                'planLabel' => $giftCode->planLabel(),
+                'ends' => optional($giftCode->expires_at)->toIso8601String(),
                 'expires_at' => optional($giftCode->expires_at)->toIso8601String(),
             ],
         ]);
@@ -179,7 +247,8 @@ class GiftCodeController extends Controller
                 'code' => $giftCode->code,
                 'email' => $giftCode->email,
                 'subscription' => 'customCode',
-                'planLabel' => 'GodiÅ¡nji plan',
+                'plan' => $giftCode->plan,
+                'planLabel' => $giftCode->planLabel(),
                 'ends' => $expiresAt->toIso8601String(),
                 'expires_at' => $expiresAt->toIso8601String(),
                 'used' => $giftCode->used,

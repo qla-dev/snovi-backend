@@ -46,6 +46,13 @@ return [
         'media_url' => env('SOCIAL_MEDIA_URL', 'https://snovi.qla.dev'),
     ],
 
+    'revenuecat' => [
+        // Secret v1 key (sk_...), used only to confirm web purchases before a voucher code is issued.
+        'secret_key' => env('REVENUECAT_SECRET_KEY'),
+        // Sandbox (test card) purchases get codes only when this is on, e.g. locally.
+        'allow_sandbox' => (bool) env('REVENUECAT_ALLOW_SANDBOX', false),
+    ],
+
     'social' => [
         // bcrypt hash of the secret the agent sends to POST /api/social/publish.
         'secret_hash' => env('SOCIAL_PUBLISH_SECRET_HASH'),

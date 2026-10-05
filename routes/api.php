@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\PushTokenController;
 use App\Http\Controllers\Api\SubcategoryController;
 use App\Http\Controllers\Api\StoryController;
 use App\Http\Controllers\Api\SocialPublishController;
+use App\Http\Controllers\Api\WebPurchaseController;
 
 Route::get('/ping', fn () => [
     'ok' => true,
@@ -24,6 +25,9 @@ Route::post('/gift-codes/check', [GiftCodeController::class, 'check']);
 Route::post('/gift-codes/redeem', [GiftCodeController::class, 'redeem']);
 Route::post('/gift-codes/email', [GiftCodeController::class, 'email']);
 Route::post('/gift-codes/revoke', [GiftCodeController::class, 'revoke']);
+Route::post('/gift-codes/status', [GiftCodeController::class, 'status'])->middleware('throttle:30,1');
+// snovi.fm/pretplata: confirms a RevenueCat Billing purchase and issues the voucher code + email.
+Route::post('/web-purchases/claim', [WebPurchaseController::class, 'claim'])->middleware('throttle:10,1');
 Route::get('/categories/search', [CategoryController::class, 'search']);
 Route::apiResource('categories', CategoryController::class);
 Route::apiResource('music', MusicController::class);
