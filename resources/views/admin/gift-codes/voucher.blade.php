@@ -33,7 +33,10 @@
         h1 { margin: 6mm 0 0; font-family: Georgia, 'Times New Roman', serif; font-size: 38px; line-height: 1; color: #fff; }
         .lead { margin: 5mm auto 0; max-width: 125mm; font-size: 15px; line-height: 1.6; color: #cbd5e1; }
 
-        .ticket { position: relative; margin: 8mm auto 0; width: 150mm; background: #fff; color: #1e1b4b; border-radius: 9mm; padding: 7mm 10mm; text-align: center; box-shadow: 0 10mm 26mm -10mm rgba(124,58,237,.75); }
+        /* The glow is a gradient layer, not a blurred box-shadow: mobile browsers print a big blurred shadow as a solid rectangle. */
+        .ticket-wrap { position: relative; margin: 8mm auto 0; width: 150mm; }
+        .ticket-glow { position: absolute; left: -22mm; right: -22mm; top: -8mm; bottom: -26mm; background: radial-gradient(ellipse 50% 50% at 50% 58%, rgba(139,92,246,.85), rgba(124,58,237,.38) 52%, rgba(124,58,237,0) 100%); }
+        .ticket { position: relative; background: #fff; color: #1e1b4b; border-radius: 9mm; padding: 7mm 10mm; text-align: center; }
         .ticket::before, .ticket::after { content: ''; position: absolute; top: 50%; width: 9mm; height: 9mm; margin-top: -4.5mm; border-radius: 50%; background: #050505; }
         .ticket::before { left: -4.5mm; } .ticket::after { right: -4.5mm; }
         .ticket .label { font-size: 11px; font-weight: 900; letter-spacing: .3em; text-transform: uppercase; color: #7c3aed; }
@@ -93,6 +96,8 @@
             <p class="lead">Preuzmite aplikaciju snovi.fm i aktivirajte kod. Priče, uspavanke i ambijenti otključavaju se odmah.</p>
         </div>
 
+        <div class="ticket-wrap">
+        <div class="ticket-glow"></div>
         <div class="ticket">
             <div class="label">Kod za aktivaciju</div>
             <div class="code">{{ $codeGroups }}</div>
@@ -106,6 +111,7 @@
                     <div class="link">{{ $link }}</div>
                 </div>
             </div>
+        </div>
         </div>
 
         <div class="steps">
