@@ -24,6 +24,12 @@ class Promoter extends Model
         'is_active' => 'boolean',
     ];
 
+    protected static function booted(): void
+    {
+        // gift_codes.promoter_id has no foreign key, so its codes are released here.
+        static::deleting(fn (Promoter $promoter) => $promoter->giftCodes()->update(['promoter_id' => null]));
+    }
+
     public function giftCodes()
     {
         return $this->hasMany(GiftCode::class);

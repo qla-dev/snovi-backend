@@ -219,9 +219,6 @@ $recordCompletedMigrations = static function (string $baseDir, callable $write):
     if ($schema::hasColumn('gift_codes', 'source')) {
         $completedMigrations[] = '2026_10_05_000002_add_web_purchase_columns_to_gift_codes_table';
     }
-    if ($schema::hasColumn('gift_codes', 'promoter_id')) {
-        $completedMigrations[] = '2026_11_03_000001_create_promoters_table';
-    }
 
     $recorded = \Illuminate\Support\Facades\DB::table('migrations')->pluck('migration')->all();
     $missing = array_values(array_diff($completedMigrations, $recorded));
