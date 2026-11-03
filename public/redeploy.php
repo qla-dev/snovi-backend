@@ -163,6 +163,30 @@ $recordCompletedMigrations = static function (string $baseDir, callable $write):
         });
     }
 
+    // The production table was made by hand without AUTO_INCREMENT on id, so every insert (also
+    // the one `artisan migrate` makes) fails. Rebuild it once with the rows it already has.
+    $idColumn = \Illuminate\Support\Facades\DB::selectOne(
+        "select extra from information_schema.columns where table_schema = schema() and table_name = 'migrations' and column_name = 'id'",
+    );
+
+    if ($idColumn && !str_contains(strtolower((string) $idColumn->extra), 'auto_increment')) {
+        $rows = \Illuminate\Support\Facades\DB::table('migrations')->orderBy('batch')->get(['migration', 'batch'])
+            ->map(fn ($row) => ['migration' => $row->migration, 'batch' => $row->batch])
+            ->unique('migration')
+            ->values()
+            ->all();
+        \Illuminate\Support\Facades\Schema::drop('migrations');
+        \Illuminate\Support\Facades\Schema::create('migrations', function (\Illuminate\Database\Schema\Blueprint $table): void {
+            $table->increments('id');
+            $table->string('migration');
+            $table->integer('batch');
+        });
+        if ($rows !== []) {
+            \Illuminate\Support\Facades\DB::table('migrations')->insert($rows);
+        }
+        $write('Rebuilt the migrations table with AUTO_INCREMENT id ('.count($rows)." rows kept).\n");
+    }
+
     // These migrations were applied manually on the existing production database.
     // The explicit list ensures that future migrations still execute normally.
     $completedMigrations = [
@@ -186,6 +210,18 @@ $recordCompletedMigrations = static function (string $baseDir, callable $write):
         '2026_07_09_000001_add_email_to_gift_codes_table',
         '2026_07_11_000001_add_can_seek_to_stories_table',
     ];
+
+    // Later ones that may also have been applied by hand: recorded only when their change is there.
+    $schema = \Illuminate\Support\Facades\Schema::class;
+    if ($schema::hasTable('social_posts')) {
+        $completedMigrations[] = '2026_10_05_000001_create_social_posts_table';
+    }
+    if ($schema::hasColumn('gift_codes', 'source')) {
+        $completedMigrations[] = '2026_10_05_000002_add_web_purchase_columns_to_gift_codes_table';
+    }
+    if ($schema::hasColumn('gift_codes', 'promoter_id')) {
+        $completedMigrations[] = '2026_11_03_000001_create_promoters_table';
+    }
 
     $recorded = \Illuminate\Support\Facades\DB::table('migrations')->pluck('migration')->all();
     $missing = array_values(array_diff($completedMigrations, $recorded));
