@@ -166,7 +166,7 @@ $recordCompletedMigrations = static function (string $baseDir, callable $write):
     // The production table was made by hand without AUTO_INCREMENT on id, so every insert (also
     // the one `artisan migrate` makes) fails. Rebuild it once with the rows it already has.
     $idColumn = \Illuminate\Support\Facades\DB::selectOne(
-        "select extra from information_schema.columns where table_schema = schema() and table_name = 'migrations' and column_name = 'id'",
+        "select extra as extra from information_schema.columns where table_schema = schema() and table_name = 'migrations' and column_name = 'id'",
     );
 
     if ($idColumn && !str_contains(strtolower((string) $idColumn->extra), 'auto_increment')) {
