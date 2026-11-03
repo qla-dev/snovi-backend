@@ -170,6 +170,34 @@ class GiftCodeController extends Controller
     }
 
     /**
+     * What a snovi.fm/promo-code link shows: the state of the code and who gave it. Read by the web
+     * page and by the link preview (Open Graph) of shared links, so it never reveals the email.
+     */
+    public function preview(string $code)
+    {
+        $codeValue = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $code));
+        $giftCode = strlen($codeValue) === 12 ? $this->findCode($codeValue) : null;
+
+        if (!$giftCode) {
+            return response()->json([
+                'message' => 'Gift kod nije pronadjen.',
+            ], 404);
+        }
+
+        $promoter = $giftCode->promoter?->is_active ? $giftCode->promoter : null;
+
+        return response()->json([
+            'data' => [
+                'code' => $giftCode->code,
+                'state' => $giftCode->used ? 'used' : ($giftCode->isExpired() ? 'expired' : 'valid'),
+                'plan' => $giftCode->plan,
+                'expires_at' => optional($giftCode->expires_at)->toIso8601String(),
+                'promoter' => $promoter?->publicPayload(),
+            ],
+        ]);
+    }
+
+    /**
      * Current end of an already activated code, without using it up. The app calls this when its
      * stored end has passed, so a renewed monthly web subscription keeps working.
      */

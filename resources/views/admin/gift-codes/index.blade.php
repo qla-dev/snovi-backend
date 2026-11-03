@@ -15,6 +15,7 @@
                     <th>ID</th>
                     <th>Kod / broj licence</th>
                     <th>Email</th>
+                    <th>Promoter</th>
                     <th>Deep link</th>
                     <th>QR</th>
                     <th>Vazi do</th>
@@ -30,6 +31,13 @@
                         @php $promoLink = 'https://snovi.fm/promo-code/' . $giftCode->code; @endphp
                         <td class="fw-semibold">{{ $giftCode->code }}</td>
                         <td>{{ $giftCode->email ?: '-' }}</td>
+                        <td>
+                            @if($giftCode->promoter)
+                                <a href="{{ route('admin.promoters.edit', $giftCode->promoter) }}">{{ $giftCode->promoter->fullName() }}</a>
+                            @else
+                                -
+                            @endif
+                        </td>
                         <td>
                             <a href="{{ $promoLink }}" target="_blank" rel="noopener">{{ $promoLink }}</a>
                         </td>
@@ -83,7 +91,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="9" class="text-center text-muted">Nema unosa</td></tr>
+                    <tr><td colspan="10" class="text-center text-muted">Nema unosa</td></tr>
                 @endforelse
             </tbody>
         </table>

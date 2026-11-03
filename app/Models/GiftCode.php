@@ -20,6 +20,7 @@ class GiftCode extends Model
         'email',
         'source',
         'plan',
+        'promoter_id',
         'rc_app_user_id',
         'rc_product_id',
         'voucher_sent_at',
@@ -36,6 +37,16 @@ class GiftCode extends Model
             'expires_at' => 'datetime',
             'voucher_sent_at' => 'datetime',
         ];
+    }
+
+    public function promoter()
+    {
+        return $this->belongsTo(Promoter::class);
+    }
+
+    public function isExpired(): bool
+    {
+        return $this->expires_at !== null && $this->expires_at->isPast();
     }
 
     public function isWebPurchase(): bool

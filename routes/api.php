@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\GiftCodeController;
 use App\Http\Controllers\Api\MusicController;
 use App\Http\Controllers\Api\PushNotificationController;
+use App\Http\Controllers\Api\PromoterController;
 use App\Http\Controllers\Api\PushTokenController;
 use App\Http\Controllers\Api\SubcategoryController;
 use App\Http\Controllers\Api\StoryController;
@@ -26,6 +27,9 @@ Route::post('/gift-codes/redeem', [GiftCodeController::class, 'redeem']);
 Route::post('/gift-codes/email', [GiftCodeController::class, 'email']);
 Route::post('/gift-codes/revoke', [GiftCodeController::class, 'revoke']);
 Route::post('/gift-codes/status', [GiftCodeController::class, 'status'])->middleware('throttle:30,1');
+// snovi.fm/promo-code/{code} and /promoters/{username}: page data and link previews.
+Route::get('/gift-codes/{code}/preview', [GiftCodeController::class, 'preview'])->middleware('throttle:60,1');
+Route::get('/promoters/{username}', [PromoterController::class, 'show'])->middleware('throttle:60,1');
 // snovi.fm/pretplata: confirms a RevenueCat Billing purchase and issues the voucher code + email.
 Route::post('/web-purchases/claim', [WebPurchaseController::class, 'claim'])->middleware('throttle:10,1');
 Route::get('/categories/search', [CategoryController::class, 'search']);

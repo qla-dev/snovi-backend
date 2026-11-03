@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\GiftCodeController;
 use App\Http\Controllers\Admin\MusicController;
+use App\Http\Controllers\Admin\PromoterController;
 use App\Http\Controllers\Admin\PushNotificationController;
 use App\Http\Controllers\Admin\SubcategoryController;
 use App\Http\Controllers\Admin\StoryController;
@@ -29,4 +30,5 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     Route::get('gift-codes/{giftCode}/qr.svg', [GiftCodeController::class, 'qr'])->name('gift-codes.qr');
     Route::get('gift-codes/{giftCode}/voucher', [GiftCodeController::class, 'voucher'])->name('gift-codes.voucher');
     Route::post('gift-codes/{giftCode}/expire', [GiftCodeController::class, 'expire'])->name('gift-codes.expire');
+    Route::resource('promoters', PromoterController::class);
 });

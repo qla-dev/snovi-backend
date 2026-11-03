@@ -11,6 +11,7 @@ class GiftCodeController extends Controller
     public function index()
     {
         $giftCodes = GiftCode::query()
+            ->with('promoter')
             ->orderByDesc('id')
             ->get();
 

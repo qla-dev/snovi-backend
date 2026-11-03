@@ -225,6 +225,7 @@
                 <a class="nav-link {{ request()->routeIs('admin.music.*') ? 'active' : '' }}" href="{{ route('admin.music.index') }}">Muzika</a>
                 <a class="nav-link {{ request()->routeIs('admin.notifications.*') ? 'active' : '' }}" href="{{ route('admin.notifications.index') }}">Notifikacije</a>
                 <a class="nav-link {{ request()->routeIs('admin.gift-codes.*') ? 'active' : '' }}" href="{{ route('admin.gift-codes.index') }}">Gift kodovi</a>
+                <a class="nav-link {{ request()->routeIs('admin.promoters.*') ? 'active' : '' }}" href="{{ route('admin.promoters.index') }}">Promoteri</a>
             </div>
             <form action="{{ route('logout') }}" method="POST" class="d-flex">
                 @csrf
