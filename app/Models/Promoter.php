@@ -17,11 +17,17 @@ class Promoter extends Model
         'bio',
         'photo_url',
         'instagram',
+        'pin',
         'is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'pin' => 'encrypted',
+    ];
+
+    protected $hidden = [
+        'pin',
     ];
 
     protected static function booted(): void
@@ -33,6 +39,11 @@ class Promoter extends Model
     public function giftCodes()
     {
         return $this->hasMany(GiftCode::class);
+    }
+
+    public function hasPin(): bool
+    {
+        return filled($this->pin);
     }
 
     public function fullName(): string

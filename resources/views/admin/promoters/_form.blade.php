@@ -23,6 +23,14 @@
     </div>
 </div>
 <div>
+    <label class="form-label">PIN za stranicu</label>
+    <div class="d-flex gap-2">
+        <input type="text" name="pin" class="form-control font-monospace" style="max-width:12rem; letter-spacing:.3em;" value="{{ old('pin', $promoter->pin) }}" inputmode="numeric" pattern="[0-9]{4,8}" maxlength="8" placeholder="npr. 2580" autocomplete="off">
+        <button type="button" class="btn btn-outline-light" onclick="this.previousElementSibling.value = String(Math.floor(Math.random() * 10000)).padStart(4, '0')">Generiši</button>
+    </div>
+    <div class="form-text text-muted">4 do 8 cifara. Kodovi na snovi.fm/promoters/… se prikazuju tek nakon unosa PIN-a. Prazno = bez PIN-a.</div>
+</div>
+<div>
     <label class="form-label">Kratki opis</label>
     <input type="text" name="headline" class="form-control" value="{{ old('headline', $promoter->headline) }}" maxlength="160" placeholder="npr. Mama dvoje djece i ljubiteljica bajki">
 </div>

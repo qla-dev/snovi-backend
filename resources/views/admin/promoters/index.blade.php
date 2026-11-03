@@ -15,6 +15,7 @@
                     <th style="width:72px;">Foto</th>
                     <th>Ime i prezime</th>
                     <th>Stranica</th>
+                    <th>PIN</th>
                     <th>Kodovi</th>
                     <th>Status</th>
                     <th class="text-end" style="width:180px;">Akcije</th>
@@ -39,6 +40,7 @@
                             @endif
                         </td>
                         <td><a href="{{ $promoter->pageLink() }}" target="_blank" rel="noopener">snovi.fm/promoters/{{ $promoter->username }}</a></td>
+                        <td class="font-monospace">{{ $promoter->pin ?: '-' }}</td>
                         <td data-order="{{ $promoter->gift_codes_count }}">
                             {{ $promoter->gift_codes_count - $promoter->used_gift_codes_count }} slobodno
                             <span class="text-muted">/ {{ $promoter->used_gift_codes_count }} iskorišteno</span>
@@ -61,7 +63,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="6" class="text-center text-muted">Nema unosa</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted">Nema unosa</td></tr>
                 @endforelse
             </tbody>
         </table>

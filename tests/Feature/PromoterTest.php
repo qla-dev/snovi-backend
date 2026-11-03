@@ -13,6 +13,8 @@ class PromoterTest extends TestCase
     {
         parent::setUp();
 
+        config(['app.key' => 'base64:'.base64_encode(random_bytes(32))]);
+
         // The older migrations are MySQL-only; the in-memory sqlite DB only needs these tables.
         foreach ([
             '2026_06_16_000001_create_gift_codes_table.php',
@@ -20,6 +22,7 @@ class PromoterTest extends TestCase
             '2026_07_09_000001_add_email_to_gift_codes_table.php',
             '2026_10_05_000002_add_web_purchase_columns_to_gift_codes_table.php',
             '2026_11_03_000001_create_promoters_table.php',
+            '2026_11_04_000001_add_pin_to_promoters_table.php',
         ] as $migration) {
             $this->artisan('migrate', ['--path' => "database/migrations/{$migration}"]);
         }
@@ -66,6 +69,28 @@ class PromoterTest extends TestCase
         $this->assertStringNotContainsString('mama@example.com', $response->getContent());
     }
 
+    public function test_pin_hides_codes_until_unlocked(): void
+    {
+        $promoter = $this->promoter(['pin' => '2580']);
+        $free = $this->code(['promoter_id' => $promoter->id]);
+
+        $response = $this->getJson('/api/promoters/ana.anic')
+            ->assertOk()
+            ->assertJsonPath('data.locked', true)
+            ->assertJsonPath('data.pin_length', 4)
+            ->assertJsonPath('data.codes_available', 1)
+            ->assertJsonCount(0, 'data.codes');
+        $this->assertStringNotContainsString($free->code, $response->getContent());
+        $this->assertStringNotContainsString('2580', $response->getContent());
+
+        $this->postJson('/api/promoters/ana.anic/unlock', ['pin' => '1111'])->assertForbidden();
+
+        $this->postJson('/api/promoters/ana.anic/unlock', ['pin' => '2580'])
+            ->assertOk()
+            ->assertJsonPath('data.locked', false)
+            ->assertJsonPath('data.codes.0.code', $free->code);
+    }
+
     public function test_hidden_or_missing_promoter_is_not_found(): void
     {
         $this->promoter(['is_active' => false]);
@@ -96,7 +121,6 @@ class PromoterTest extends TestCase
 
     public function test_admin_assigns_frees_and_generates_codes(): void
     {
-        config(['app.key' => 'base64:'.base64_encode(random_bytes(32))]);
         $this->actingAs((new User())->forceFill(['id' => 1]));
         $promoter = $this->promoter();
         $kept = $this->code(['promoter_id' => $promoter->id]);
@@ -115,12 +139,14 @@ class PromoterTest extends TestCase
             'first_name' => 'Ana',
             'last_name' => 'Anić',
             'instagram' => '@ana.snovi',
+            'pin' => '123456',
             'is_active' => 1,
             'gift_code_ids' => [$kept->id, $assigned->id, $webCode->id],
             'new_codes' => 2,
         ])->assertRedirect(route('admin.promoters.edit', $promoter));
 
         $this->assertSame('ana.snovi', $promoter->fresh()->instagram);
+        $this->assertSame('123456', $promoter->fresh()->pin);
         $this->assertSame($promoter->id, $kept->fresh()->promoter_id);
         $this->assertSame($promoter->id, $assigned->fresh()->promoter_id);
         $this->assertSame($promoter->id, $used->fresh()->promoter_id);

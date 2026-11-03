@@ -30,6 +30,7 @@ Route::post('/gift-codes/status', [GiftCodeController::class, 'status'])->middle
 // snovi.fm/promo-code/{code} and /promoters/{username}: page data and link previews.
 Route::get('/gift-codes/{code}/preview', [GiftCodeController::class, 'preview'])->middleware('throttle:60,1');
 Route::get('/promoters/{username}', [PromoterController::class, 'show'])->middleware('throttle:60,1');
+Route::post('/promoters/{username}/unlock', [PromoterController::class, 'unlock'])->middleware('throttle:10,1');
 // snovi.fm/pretplata: confirms a RevenueCat Billing purchase and issues the voucher code + email.
 Route::post('/web-purchases/claim', [WebPurchaseController::class, 'claim'])->middleware('throttle:10,1');
 Route::get('/categories/search', [CategoryController::class, 'search']);

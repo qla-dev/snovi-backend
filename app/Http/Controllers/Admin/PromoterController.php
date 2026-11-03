@@ -135,6 +135,7 @@ class PromoterController extends Controller
         $request->merge([
             'username' => Str::lower(trim((string) $request->input('username'))),
             'instagram' => ltrim(trim((string) $request->input('instagram')), '@') ?: null,
+            'pin' => trim((string) $request->input('pin')) ?: null,
         ]);
 
         $data = $request->validate([
@@ -144,11 +145,13 @@ class PromoterController extends Controller
             'headline' => ['nullable', 'string', 'max:160'],
             'bio' => ['nullable', 'string', 'max:2000'],
             'instagram' => ['nullable', 'string', 'max:80', 'regex:/^[A-Za-z0-9._]+$/'],
+            'pin' => ['nullable', 'string', 'regex:/^[0-9]{4,8}$/'],
             'photo_upload' => ['nullable', 'image', 'max:5120'],
             'is_active' => ['sometimes', 'boolean'],
         ], [
             'username.regex' => 'Username smije imati samo mala slova, brojeve, tačku, crticu i donju crtu.',
             'instagram.regex' => 'Instagram profil upišite bez linka, npr. ime.prezime.',
+            'pin.regex' => 'PIN mora imati od 4 do 8 cifara.',
         ]);
 
         unset($data['photo_upload']);
